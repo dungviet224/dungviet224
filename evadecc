@@ -1,0 +1,969 @@
+local WorkspacePlayers =3D game:GetService("Workspace").Game.Players
+local Players =3D game:GetService('Players')
+local localplayer =3D Players.LocalPlayer
+local GuiService =3D game:GetService("GuiService")
+local Light =3D game:GetService("Lighting")
+local OrionLib =3D loadstring(game:HttpGet(('https://raw.githubusercontent=
+.com/shlexware/Orion/main/source')))()
+OrionLib:MakeNotification({
+    Name =3D "Viet Dung H=C3=BAp:)",
+    Content =3D "Viet Dung H=C3=BAp:) is Loading.",
+    Image =3D "rbxassetid://4483345998",
+    Time =3D 4
+})
+game:GetService("ReplicatedStorage").Events.Respawn:FireServer()
+wait(4)
+OrionLib:MakeNotification({
+    Name =3D " Viet Dung H=C3=BAp:)",
+    Content =3D "Viet Dung H=C3=BAp:) is Ready!",
+    Image =3D "rbxassetid://4483345998",
+    Time =3D 2
+})
+local Window =3D OrionLib:MakeWindow({Name =3D "Viet Dung H=C3=BAp:) |Evad=
+e|", HidePremium =3D false,IntroText =3D "Evade V2.6", SaveConfig =3D fals=
+e, ConfigFolder =3D "OrionTest"})
+ 
+--functions and shit
+getgenv().money =3D true
+getgenv().revivedie =3D true
+getgenv().autowistle =3D true
+getgenv().autochat =3D true
+getgenv().AutoDrink =3D true
+getgenv().NoCameraShake =3D true
+getgenv().Settings =3D {
+    moneyfarm =3D false,
+    afkfarm =3D false,
+    NoCameraShake =3D false,
+    Speed =3D 1450,
+    Jump =3D 3,
+    reviveTime =3D 3,
+}
+ 
+local FindAI =3D function()
+    for =5F,v in pairs(WorkspacePlayers:GetChildren()) do
+        if not Players:FindFirstChild(v.Name) then
+            return v
+        end
+    end
+end
+ 
+local GetDownedPlr =3D function()
+    for i,v in pairs(WorkspacePlayers:GetChildren()) do
+        if v:GetAttribute("Downed") then
+            return v
+        end
+    end
+end
+ 
+local revive =3D function()
+    local downedplr =3D GetDownedPlr()
+    if downedplr ~=3D nil and downedplr:FindFirstChild('HumanoidRootPart')=
+ then
+        task.spawn(function()
+            while task.wait() do
+                if localplayer.Character then
+                    workspace.Game.Settings:SetAttribute("ReviveTime", 2.2=
+)
+                    localplayer.Character:FindFirstChild('HumanoidRootPart=
+').CFrame =3D CFrame.new(downedplr:FindFirstChild('HumanoidRootPart').Posi=
+tion.X, downedplr:FindFirstChild('HumanoidRootPart').Position.Y + 3, downe=
+dplr:FindFirstChild('HumanoidRootPart').Position.Z)
+                    task.wait()
+                    game:GetService("ReplicatedStorage").Events.Revive.Rev=
+ivePlayer:FireServer(tostring(downedplr), false)
+                    task.wait(4.5)
+                    game:GetService("ReplicatedStorage").Events.Revive.Rev=
+ivePlayer:FireServer(tostring(downedplr), true)
+                    game:GetService("ReplicatedStorage").Events.Revive.Rev=
+ivePlayer:FireServer(tostring(downedplr), true)
+                    game:GetService("ReplicatedStorage").Events.Revive.Rev=
+ivePlayer:FireServer(tostring(downedplr), true)
+                    break
+                end
+            end
+        end)
+    end
+end
+ 
+task.spawn(function()
+    while task.wait() do
+        if Settings.AutoRespawn then
+             if localplayer.Character and localplayer.Character:GetAttribu=
+te("Downed") then
+                game:GetService("ReplicatedStorage").Events.Respawn:FireSe=
+rver()
+             end
+        end
+ 
+        if Settings.NoCameraShake then
+            localplayer.PlayerScripts.CameraShake.Value =3D CFrame.new(0,0=
+,0) * CFrame.new(0,0,0)
+        end
+        if Settings.moneyfarm then
+            if localplayer.Character and localplayer.Character:GetAttribut=
+e("Downed") then
+                game:GetService("ReplicatedStorage").Events.Respawn:FireSe=
+rver()
+                task.wait(3)
+            else
+                revive()
+                task.wait(1)
+            end
+        end
+        if Settings.moneyfarm =3D=3D false and Settings.afkfarm and localp=
+layer.Character:FindFirstChild('HumanoidRootPart') ~=3D nil then
+            localplayer.Character:FindFirstChild('HumanoidRootPart').CFram=
+e =3D CFrame.new(6007, 7005, 8005)
+        end
+    end
+end)
+ 
+function camerashake()
+    while NoCameraShake =3D=3D true do task.wait()
+        localplayer.PlayerScripts.CameraShake.Value =3D CFrame.new(0,0,0) =
+* CFrame.new(0,0,0)
+    end
+end
+ 
+function autodrink()
+=9while AutoDrink =3D=3D true do
+=9=9local ohString1 =3D "Cola"
+=9=9game:GetService("ReplicatedStorage").Events.UseUsable:FireServer(ohStr=
+ing1)
+=9=9wait(6)
+=9end
+end
+ 
+function SpamChat()
+    while autochat =3D=3D true do
+        local ohString1 =3D "Viet Dung H=C3=BAp:) on top"
+        local ohString2 =3D "All"
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.S=
+ayMessageRequest:FireServer(ohString1, ohString2)
+        wait(1)
+    end
+end
+ 
+function autowistlefunction()
+    while autowistle =3D=3D true do
+        local ohString1 =3D "Whistle"
+        local ohBoolean2 =3D true
+        game:GetService("Players").LocalPlayer.PlayerScripts.Events.Keybin=
+dUsed:Fire(ohString1, ohBoolean2)
+        game:GetService("ReplicatedStorage").Events.Whistle:FireServer()
+        wait(5)
+    end
+end
+ 
+function god()
+    while revivedie =3D=3D true do
+        game:GetService("ReplicatedStorage").Events.Respawn:FireServer()
+        wait()
+    end
+end
+ 
+function dofullbright()
+    Light.Ambient =3D Color3.new(1, 1, 1)
+    Light.ColorShift=5FBottom =3D Color3.new(1, 1, 1)
+    Light.ColorShift=5FTop =3D Color3.new(1, 1, 1)
+    game.Lighting.FogEnd =3D 100000
+    game.Lighting.FogStart =3D 0
+    game.Lighting.ClockTime =3D 14
+    game.Lighting.Brightness =3D 2
+    game.Lighting.GlobalShadows =3D false
+end
+ 
+function freemoney()
+    while money =3D=3D true do
+        local ohString1 =3D "Free money <font color=3D\"rgb(100,255,100)\"=
+>($99999)</font>"
+        game:GetService("Players").LocalPlayer.PlayerGui.HUD.Messages.Use:=
+Fire(ohString1)
+        wait(5)
+    end
+end
+ 
+OrionLib:MakeNotification({
+    Name =3D "Welcome To Viet Dung H=C3=BAp:)",
+    Content =3D "Thanks for using Viet Dung H=C3=BAp:)",
+    Image =3D "rbxassetid://4483345998",
+    Time =3D 5
+})
+ 
+ 
+function RandomEmote()
+    OrionLib:MakeNotification({
+        Name =3D "Random Emoting...",
+        Content =3D "You pressed the Random Emote keybind",
+        Image =3D "rbxassetid://4483345998",
+        Time =3D 5
+    })
+end
+--tabs
+ 
+local MainTab=3D Window:MakeTab({
+=9Name =3D "Main features",
+=9Icon =3D "rbxassetid://4483345998",
+=9PremiumOnly =3D false
+})
+ 
+local MiscTab=3D Window:MakeTab({
+=9Name =3D "Extra",
+=9Icon =3D "rbxassetid://4483345998",
+=9PremiumOnly =3D false
+})
+ 
+local ESPTab =3D Window:MakeTab({
+    Name =3D  "Esp",
+    Icon =3D "rbxassetid://4483345998",
+    PremiumOnly =3D false
+})
+ 
+local TeleportTab=3D Window:MakeTab({
+    Name =3D "Teleport",
+=9Icon =3D "rbxassetid://4483345998",
+=9PremiumOnly =3D false
+})
+ 
+local FunTab=3D Window:MakeTab({
+    Name =3D "Fun",
+=9Icon =3D "rbxassetid://4483345998",
+=9PremiumOnly =3D false
+})
+ 
+local CreditsTab =3D Window:MakeTab({
+=9Name =3D "Credits",
+=9Icon =3D "rbxassetid://4483345998",
+=9PremiumOnly =3D true
+})
+ 
+local MiscTab3 =3D MainTab:AddSection({
+=9Name =3D "Auto Farms"
+})
+ 
+MainTab:AddToggle({
+=9Name =3D "Money Farm",
+=9Default =3D false,
+=9Callback =3D function(Value)
+=9=9Settings.moneyfarm =3D Value
+=9end    
+})
+ 
+MainTab:AddToggle({
+=9Name =3D "Afk Farm",
+=9Default =3D false,
+=9Callback =3D function(Value)
+        Settings.afkfarm =3D Value
+=9end    
+})
+ 
+--sliders
+local MainTab3 =3D MainTab:AddSection({
+=9Name =3D "Sliders"
+})
+ 
+local Misctab5 =3D MiscTab:AddSection({
+=9Name =3D "Sliders"
+})
+ 
+local TargetWalkspeed
+MainTab:AddSlider({
+=9Name =3D "Speed",
+=9Min =3D 0,
+=9Max =3D 250,
+=9Default =3D 0,
+=9Color =3D Color3.fromRGB(128, 128, 128),
+=9Increment =3D 1,
+=9ValueName =3D "Walk Speed",
+=9Callback =3D function(Value)
+=9=9TargetWalkspeed =3D Value
+=9end   
+})
+ 
+MainTab:AddSlider({
+    Name =3D "Hip height",
+    Min =3D -1.40,
+    Max =3D 100,
+    Default =3D -1.40,
+    Color =3D Color3.fromRGB(128, 128, 128),
+    Increment =3D 1,
+=9ValueName =3D "Hip Height",
+    Callback =3D function(HipValue)
+        game.Players.LocalPlayer.Character.Humanoid.HipHeight =3D HipValue=
+
+    end    
+})
+ 
+MainTab:AddSlider({
+=9Name =3D "Fov Slider",
+=9Min =3D 1,
+=9Max =3D 120,
+=9Default =3D 70,
+=9Color =3D Color3.fromRGB(128, 128, 128),
+=9Increment =3D 1,
+=9ValueName =3D "Fov",
+=9Callback =3D function(Fov)
+        local ohString1 =3D "FieldOfView"
+        local ohNumber2 =3D Fov
+        game:GetService("ReplicatedStorage").Events.UpdateSetting:FireServ=
+er(ohString1, ohNumber2)
+    end
+})
+ 
+MainTab:AddSlider({
+=9Name =3D "Jump Power",
+=9Min =3D 0,
+=9Max =3D 120,
+=9Default =3D 3,
+=9Color =3D Color3.fromRGB(128, 128, 128),
+=9Increment =3D 1,
+=9ValueName =3D "Jump",
+=9Callback =3D function(Value)
+=9=9Settings.Jump =3D Value
+    end
+})
+ 
+MiscTab:AddSlider({
+=9Name =3D "Day & night Slider",
+=9Min =3D 0,
+=9Max =3D 24,
+=9Default =3D 14,
+=9Color =3D Color3.fromRGB(128, 128, 128),
+=9Increment =3D 0.1,
+=9ValueName =3D "Time",
+=9Callback =3D function(Time)
+        game.Lighting.ClockTime =3D Time
+    end
+})
+ 
+--toggles
+ 
+local FunTab2 =3D FunTab:AddSection({
+=9Name =3D "Toggles"
+})
+ 
+local MiscTab3 =3D MainTab:AddSection({
+=9Name =3D "Toggles"
+})
+ 
+MainTab:AddToggle({
+=9Name =3D "No Camera Shake",
+=9Default =3D false,
+=9Callback =3D function(Value)
+        NoCameraShake =3D Value
+        camerashake()
+=9end    
+})
+ 
+MainTab:AddToggle({
+=9Name =3D "Auto Drink Cola (drinks everytime it runs out)",
+=9Default =3D false,
+=9Callback =3D function(Value)
+=9=9AutoDrink =3D Value
+=9=9autodrink()
+=9end    
+})
+ 
+FunTab:AddToggle({
+=9Name =3D "Spam Chat",
+=9Default =3D false,
+=9Callback =3D function(Value)
+        autochat =3D Value
+        SpamChat()
+=9end    
+})
+ 
+FunTab:AddToggle({
+=9Name =3D "fake money giver",
+=9Default =3D false,
+=9Callback =3D function(Value)
+        money =3D Value
+        freemoney()
+=9end    
+})
+ 
+MainTab:AddToggle({
+=9Name =3D "auto respawn (you respawn when you get downed)",
+=9Default =3D false,
+=9Callback =3D function(Value)
+        Settings.AutoRespawn =3D Value
+=9end    
+})
+ 
+FunTab:AddToggle({
+=9Name =3D "Auto Wistle",
+=9Default =3D false,
+=9Callback =3D function(Value)
+=9=9autowistle =3D Value
+        autowistlefunction()
+=9end    
+})
+ 
+--buttons
+local FunTab3 =3D FunTab:AddSection({
+=9Name =3D "Buttons"
+})
+ 
+local MiscTab2 =3D MiscTab:AddSection({
+=9Name =3D "Buttons"
+})
+ 
+MiscTab:AddButton({
+    Name =3D "Chat Spy",
+    Callback =3D function()
+        enabled =3D true
+spyOnMyself =3D false
+public =3D false
+publicItalics =3D true
+privateProperties =3D {
+=9Color =3D Color3.fromRGB(0,255,255); 
+=9Font =3D Enum.Font.SourceSansBold;
+=9TextSize =3D 18;
+}
+local StarterGui =3D game:GetService("StarterGui")
+local Players =3D game:GetService("Players")
+local player =3D Players.LocalPlayer
+local saymsg =3D game:GetService("ReplicatedStorage"):WaitForChild("Defaul=
+tChatSystemChatEvents"):WaitForChild("SayMessageRequest")
+local getmsg =3D game:GetService("ReplicatedStorage"):WaitForChild("Defaul=
+tChatSystemChatEvents"):WaitForChild("OnMessageDoneFiltering")
+local instance =3D (=5FG.chatSpyInstance or 0) + 1
+=5FG.chatSpyInstance =3D instance
+ 
+local function onChatted(p,msg)
+=9if =5FG.chatSpyInstance =3D=3D instance then
+=9=9if p=3D=3Dplayer and msg:lower():sub(1,4)=3D=3D"/spy" then
+=9=9=9enabled =3D not enabled
+=9=9=9wait(0.3)
+=9=9=9privateProperties.Text =3D "{SPY "..(enabled and "EN" or "DIS").."AB=
+LED}"
+=9=9=9StarterGui:SetCore("ChatMakeSystemMessage",privateProperties)
+=9=9elseif enabled and (spyOnMyself=3D=3Dtrue or p~=3Dplayer) then
+=9=9=9msg =3D msg:gsub("[\n\r]",''):gsub("\t",' '):gsub("[ ]+",' ')
+=9=9=9local hidden =3D true
+=9=9=9local conn =3D getmsg.OnClientEvent:Connect(function(packet,channel)=
+
+=9=9=9=9if packet.SpeakerUserId=3D=3Dp.UserId and packet.Message=3D=3Dmsg:=
+sub(#msg-#packet.Message+1) and (channel=3D=3D"All" or (channel=3D=3D"Team=
+" and public=3D=3Dfalse and Players[packet.FromSpeaker].Team=3D=3Dplayer.T=
+eam)) then
+=9=9=9=9=9hidden =3D false
+=9=9=9=9end
+=9=9=9end)
+=9=9=9wait(1)
+=9=9=9conn:Disconnect()
+=9=9=9if hidden and enabled then
+=9=9=9=9if public then
+=9=9=9=9=9saymsg:FireServer((publicItalics and "/me " or '').."{SPY} [".. =
+p.Name .."]: "..msg,"All")
+=9=9=9=9else
+=9=9=9=9=9privateProperties.Text =3D "{SPY} [".. p.Name .."]: "..msg
+=9=9=9=9=9StarterGui:SetCore("ChatMakeSystemMessage",privateProperties)
+=9=9=9=9end
+=9=9=9end
+=9=9end
+=9end
+end
+ 
+for =5F,p in ipairs(Players:GetPlayers()) do
+=9p.Chatted:Connect(function(msg) onChatted(p,msg) end)
+end
+Players.PlayerAdded:Connect(function(p)
+=9p.Chatted:Connect(function(msg) onChatted(p,msg) end)
+end)
+privateProperties.Text =3D "{SPY "..(enabled and "EN" or "DIS").."ABLED}"
+StarterGui:SetCore("ChatMakeSystemMessage",privateProperties)
+local chatFrame =3D player.PlayerGui.Chat.Frame
+chatFrame.ChatChannelParentFrame.Visible =3D true
+chatFrame.ChatBarParentFrame.Position =3D chatFrame.ChatChannelParentFrame=
+.Position+UDim2.new(UDim.new(),chatFrame.ChatChannelParentFrame.Size.Y)
+OrionLib:MakeNotification({
+=9Name =3D " Viet Dung H=C3=BAp:)k",
+=9Content =3D "Pressed on the Chat Spy Button",
+=9Image =3D "rbxassetid://4483345998",
+=9Time =3D 2
+})    
+      end    
+})
+ 
+ESPTab:AddButton({
+=9Name =3D "Player Esp",
+=9Callback =3D function()
+=9=9local c =3D workspace.CurrentCamera
+=9=9local ps =3D game:GetService("Players")
+=9=9local lp =3D ps.LocalPlayer
+=9=9local rs =3D game:GetService("RunService")
+=9=9local function getdistancefc(part)
+=9=9=9return (part.Position - c.CFrame.Position).Magnitude
+=9=9end
+=9=9local function esp(p, cr)
+=9=9=9local h =3D cr:WaitForChild("Humanoid")
+=9=9=9local hrp =3D cr:WaitForChild("HumanoidRootPart")
+=9=9=9local text =3D Drawing.new("Text")
+=9=9=9text.Visible =3D false
+=9=9=9text.Center =3D true
+=9=9=9text.Outline =3D true
+=9=9=9text.Font =3D 2
+=9=9=9text.Color =3D Color3.fromRGB(255, 255, 255)
+=9=9=9text.Size =3D 17
+=9=9=9local c1
+=9=9=9local c2
+=9=9=9local c3
+=9=9=9local function dc()
+=9=9=9=9text.Visible =3D false
+=9=9=9=9text:Remove()
+=9=9=9=9if c1 then
+=9=9=9=9=9c1:Disconnect()
+=9=9=9=9=9c1 =3D nil
+=9=9=9=9end
+=9=9=9=9if c2 then
+=9=9=9=9=9c2:Disconnect()
+=9=9=9=9=9c2 =3D nil
+=9=9=9=9end
+=9=9=9=9if c3 then
+=9=9=9=9=9c3:Disconnect()
+=9=9=9=9=9c3 =3D nil
+=9=9=9=9end
+=9=9=9end
+=9=9=9c2 =3D
+=9=9=9=9cr.AncestryChanged:Connect(
+=9=9=9=9function(=5F, parent)
+=9=9=9=9=9if not parent then
+=9=9=9=9=9=9dc()
+=9=9=9=9=9end
+=9=9=9=9end
+=9=9=9)
+=9=9=9c3 =3D
+=9=9=9=9h.HealthChanged:Connect(
+=9=9=9=9function(v)
+=9=9=9=9=9if (v <=3D 0) or (h:GetState() =3D=3D Enum.HumanoidStateType.Dea=
+d) then
+=9=9=9=9=9=9dc()
+=9=9=9=9=9end
+=9=9=9=9end
+=9=9=9)
+=9=9=9c1 =3D
+=9=9=9=9rs.RenderStepped:Connect(
+=9=9=9=9function()
+=9=9=9=9=9local hrp=5Fpos, hrp=5Fos =3D c:WorldToViewportPoint(hrp.Positio=
+n)
+=9=9=9=9=9if hrp=5Fos then
+=9=9=9=9=9=9text.Position =3D Vector2.new(hrp=5Fpos.X, hrp=5Fpos.Y)
+=9=9=9=9=9=9text.Text =3D p.Name .. " (" .. tostring(math.floor(getdistanc=
+efc(hrp))) .. " m)"
+=9=9=9=9=9=9text.Visible =3D true
+=9=9=9=9=9else
+=9=9=9=9=9=9text.Visible =3D false
+=9=9=9=9=9end
+=9=9=9=9end
+=9=9=9)
+=9=9end
+=9=9local function p=5Fadded(p)
+=9=9=9if p.Character then
+=9=9=9=9esp(p, p.Character)
+=9=9=9end
+=9=9=9p.CharacterAdded:Connect(
+=9=9=9=9function(cr)
+=9=9=9=9=9esp(p, cr)
+=9=9=9=9end
+=9=9=9)
+=9=9end
+=9=9for i, p in next, ps:GetPlayers() do
+=9=9=9if p ~=3D lp then
+=9=9=9=9p=5Fadded(p)
+=9=9=9end
+=9=9end
+=9=9ps.PlayerAdded:Connect(p=5Fadded)
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Player Esp Button",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+  =9end    
+})
+ 
+MiscTab:AddButton({
+=9Name =3D "Inf Jump",
+=9Callback =3D function()
+        local InfiniteJumpEnabled =3D true
+        game:GetService("UserInputService").JumpRequest:connect(function()=
+
+            if InfiniteJumpEnabled then
+                game:GetService"Players".LocalPlayer.Character:FindFirstCh=
+ildOfClass'Humanoid':ChangeState("Jumping")
+            end
+        end)
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Inf Jump Button",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+  =9end    
+})
+ 
+MiscTab:AddButton({
+=9Name =3D "Q to Teleport",
+=9Callback =3D function()
+        plr =3D game.Players.LocalPlayer 
+        hum =3D plr.Character.HumanoidRootPart 
+        mouse =3D plr:GetMouse()
+        mouse.KeyDown:connect(function(key)
+            if key =3D=3D "q" then
+            if mouse.Target then
+                hum.CFrame =3D CFrame.new(mouse.Hit.x, mouse.Hit.y + 5, mo=
+use.Hit.z)
+                end
+            end
+        end)
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Q To Teleport Button",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+  =9end    
+})
+ 
+MiscTab:AddButton({
+=9Name =3D "Full Bright",
+=9Callback =3D function()
+        dofullbright()
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Full Bright Button",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+  =9end    
+})
+ 
+MiscTab:AddButton({
+=9Name =3D "Return Too Main Menu",
+=9Callback =3D function()
+        game:GetService("ReplicatedStorage").Events.ReturnToMenu:FireServe=
+r()
+  =9end    
+})
+ 
+MiscTab:AddButton({
+=9Name =3D "Low Quality",
+=9Callback =3D function()
+        local ohString1 =3D "LowQuality"
+        local ohBoolean2 =3D true
+        game:GetService("ReplicatedStorage").Events.UpdateSetting:FireServ=
+er(ohString1, ohBoolean2)
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Low Quality Button",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+  =9end    
+})
+ 
+FunTab:AddButton({
+    Name =3D "Free cam (shift + P)",
+    Callback =3D function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Robobo2=
+022/script/main/Freecam.lua"))()
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Free cam Button",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+      end    
+})
+ 
+TeleportTab:AddButton({
+    Name =3D "Main Game",
+    Callback =3D function()
+        local TeleportService =3D game:GetService('TeleportService')
+        GameId =3D 9872472334
+        TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+      end    
+})
+ 
+ 
+TeleportTab:AddButton({
+    Name =3D "Casual",
+    Callback =3D function()
+        local TeleportService =3D game:GetService('TeleportService')
+        GameId =3D 10662542523
+        TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+      end    
+})
+ 
+TeleportTab:AddButton({
+    Name =3D "Social Space",
+    Callback =3D function()
+        local TeleportService =3D game:GetService('TeleportService')
+        GameId =3D 10324347967
+        TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+      end    
+})
+ 
+TeleportTab:AddButton({
+    Name =3D "Big Team",
+    Callback =3D function()
+        local TeleportService =3D game:GetService('TeleportService')
+        GameId =3D 10324346056
+        TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+      end    
+})
+ 
+TeleportTab:AddButton({
+    Name =3D "Team DeathMatch",
+    Callback =3D function()
+        local TeleportService =3D game:GetService('TeleportService')
+        GameId =3D 110539706691
+        TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+      end    
+})
+ 
+TeleportTab:AddButton({
+    Name =3D "Vc Only",
+    Callback =3D function()
+        local TeleportService =3D game:GetService('TeleportService')
+        GameId =3D 10808838353
+        TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+      end    
+})
+ 
+local MiscTab2 =3D MiscTab:AddSection({
+=9Name =3D "Item Giver"
+})
+ 
+MiscTab:AddButton({
+=9Name =3D "Test Emote (Permanant)",
+=9Callback =3D function()
+        game:GetService("ReplicatedStorage").Events.UI.Purchase:InvokeServ=
+er("Emotes", "Test")
+  =9end    
+})
+ 
+--keybinds
+ 
+local MiscTab1 =3D MiscTab:AddSection({
+=9Name =3D "KeyBinds"
+})
+ 
+local FunTab1 =3D FunTab:AddSection({
+=9Name =3D "KeyBinds"
+})
+ 
+MiscTab:AddBind({
+=9Name =3D "Drink Cola",
+=9Default =3D Enum.KeyCode.H,
+=9Hold =3D false,
+=9Callback =3D function()
+=9=9local ohString1 =3D "Cola"
+=9=9game:GetService("ReplicatedStorage").Events.UseUsable:FireServer(ohStr=
+ing1)
+=9end    
+})
+ 
+MiscTab:AddBind({
+=9Name =3D "Rejoin Server",
+=9Default =3D Enum.KeyCode.B,
+=9Hold =3D false,
+=9Callback =3D function()
+        OrionLib:MakeNotification({
+            Name =3D "You Pressed the Rejoin Keybind.",
+            Content =3D "Rejoining in 5 seconds",
+            Image =3D "rbxassetid://4483345998",
+            Time =3D 5
+        })
+        wait(1)
+        OrionLib:MakeNotification({
+            Name =3D "Viet Dung H=C3=BAp:)",
+            Content =3D "Rejoining in 4 seconds",
+            Image =3D "rbxassetid://4483345998",
+            Time =3D 5
+        })
+        wait(1)
+        OrionLib:MakeNotification({
+            Name =3D "Viet Dung H=C3=BAp:)",
+            Content =3D "Rejoining in 3 seconds",
+            Image =3D "rbxassetid://4483345998",
+            Time =3D 5
+        })
+        wait(1)
+        OrionLib:MakeNotification({
+            Name =3D "Viet Dung H=C3=BAp:)",
+            Content =3D "Rejoining in 2 seconds",
+            Image =3D "rbxassetid://4483345998",
+            Time =3D 5
+        })
+        wait(1)
+        OrionLib:MakeNotification({
+            Name =3D "Viet Dung H=C3=BAp:)",
+            Content =3D "Rejoining in 1 seconds",
+            Image =3D "rbxassetid://4483345998",
+            Time =3D 5
+        })
+        wait(1)
+        OrionLib:MakeNotification({
+            Name =3D "Viet Dung H=C3=BAp:)",
+            Content =3D "Rejoining",
+            Image =3D "rbxassetid://4483345998",
+            Time =3D 5
+        })
+        local ts =3D game:GetService("TeleportService")
+        local p =3D game:GetService("Players").LocalPlayer
+        ts:Teleport(game.PlaceId, p)
+=9end    
+})
+ 
+MiscTab:AddBind({
+=9Name =3D "Random Vote",
+=9Default =3D Enum.KeyCode.X,
+=9Hold =3D false,
+=9Callback =3D function()
+        local RandomVote =3D math.random(3)
+=9=9local ohNumber1 =3D (RandomVote)
+        game:GetService("ReplicatedStorage").Events.Vote:FireServer(ohNumb=
+er1)
+        OrionLib:MakeNotification({
+=9=9=9Name =3D "Viet Dung H=C3=BAp:)",
+=9=9=9Content =3D "Pressed on the Random Vote Keybind",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 2
+=9=9}) 
+=9end    
+})
+ 
+MiscTab:AddBind({
+=9Name =3D "Respawn",
+=9Default =3D Enum.KeyCode.R,
+=9Hold =3D false,
+=9Callback =3D function()
+=9=9game:GetService("ReplicatedStorage").Events.Respawn:FireServer()
+=9=9OrionLib:MakeNotification({
+=9=9=9Name =3D "Respawning...",
+=9=9=9Content =3D "You pressed the respawn keybind",
+=9=9=9Image =3D "rbxassetid://4483345998",
+=9=9=9Time =3D 5
+=9=9=9})
+=9end    
+})
+ 
+FunTab:AddBind({
+=9Name =3D "Random Emote",
+=9Default =3D Enum.KeyCode.Z,
+=9Hold =3D false,
+=9Callback =3D function()
+        local number =3D math.random(4)
+        local ohString1 =3D (number)
+        game:GetService("ReplicatedStorage").Events.Emote:FireServer(ohStr=
+ing1)
+        RandomEmote()
+=9end    
+})
+--test
+ 
+ESPTab:AddToggle({
+    Name =3D "Bots tracers",
+    Default =3D true,
+    Callback =3D function(Value)
+        getgenv().toggleespmpt =3D Value
+    end    
+})
+ 
+ESPTab:AddColorpicker({
+    Name =3D "Colour",
+    Default =3D Color3.fromRGB(255, 255, 255),
+    Callback =3D function(Value)
+        getgenv().mptespcolour =3D Value
+    end  
+})
+ 
+--credits
+ 
+CreditsTab:AddParagraph("Owner/Main Dev","hydra#8270")
+CreditsTab:AddParagraph("Credits","Felix and ss.spooky.ss")
+CreditsTab:AddParagraph("Credits","xCLY And batusd")
+CreditsTab:AddParagraph("Credits","Truncated Cuboctahedron")
+ 
+ 
+local cam =3D workspace.CurrentCamera
+local rs =3D game:GetService'RunService'
+ 
+getgenv().toggleespmpt =3D true
+function esp(plr)
+   if game:GetService'Players':GetPlayerFromCharacter(plr) =3D=3D nil then=
+
+    local rat =3D Drawing.new("Line")
+        rs.RenderStepped:Connect(function()
+            if plr:FindFirstChild'HumanoidRootPart' then
+                local vector,screen =3D cam:WorldToViewportPoint(plr.Human=
+oidRootPart.Position)
+                if screen then
+                    rat.Visible =3D toggleespmpt
+                    rat.From =3D Vector2.new(cam.ViewportSize.X / 2,cam.Vi=
+ewportSize.Y / 1)
+                    rat.To =3D Vector2.new(vector.X,vector.Y)
+                    rat.Color =3D getgenv().mptespcolour
+                    rat.Thickness =3D getgenv().mptespthickness
+                    else
+                        rat.Visible =3D false
+                end
+                else
+                    pcall(function()
+                    rat.Visible =3D false
+                    end)
+            end
+                if not plr:FindFirstChild'HumanoidRootPart' or not plr:Fin=
+dFirstChild'HumanoidRootPart':IsDescendantOf(game:GetService'Workspace') t=
+hen
+                    pcall(function()
+                    rat:Remove()
+                    end)
+            end
+        end)
+   end
+end
+ 
+for i,v in pairs(game:GetService'Workspace'.Game.Players:GetChildren()) do=
+
+    esp(v)
+end
+ 
+game:GetService'Workspace'.Game.Players.ChildAdded:Connect(function(plr)
+    esp(plr)
+end)
+ 
+local old
+old =3D hookmetamethod(game,"=5F=5Fnamecall",newcclosure(function(self,...=
+)
+    local Args =3D {...}
+    local method =3D getnamecallmethod()
+    if tostring(self) =3D=3D 'Communicator' and method =3D=3D "InvokeServe=
+r" and Args[1] =3D=3D "update" then
+        return Settings.Speed, Settings.Jump 
+    end
+    return old(self,...)
+end))
+ 
+setclipboard("https://discord.gg/k9a4zym5uG")
+ 
+OrionLib:MakeNotification({
+Name =3D "Join Discord",
+Content =3D "Join the Discord Copied in your clip Board",
+Image =3D "rbxassetid://4483345998",
+Time =3D 5
+})
+ 
+game:GetService("RunService").RenderStepped:Connect(function()
+    pcall(function()
+        if game.Players.LocalPlayer.Character.Humanoid.MoveDirection.Magni=
+tude > 0 then
+            game.Players.LocalPlayer.Character:TranslateBy(game.Players.Lo=
+calPlayer.Character.Humanoid.MoveDirection * TargetWalkspeed/100)
+        end
+    end)
+end)
+ 
+OrionLib:Init()
