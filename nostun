@@ -1,0 +1,201 @@
+-- Made by dEyessect / script makers carbinesayshi and digitalmusketeer <--- musk leaked the script
+-- It updated today 12/25/20 added bad word gui and hitbox expander (the bad word gui requires your account to be 13+)
+-- 12/25/20 for the hit box expander to work it needs to be the range of the weapon you are using
+--(i took away the little blue boxes for the hitbox expander because it was useless) 
+
+local ScreenGui = Instance.new("ScreenGui")
+local main = Instance.new("Frame")
+local staystun = Instance.new("TextButton")
+local staycorn = Instance.new("UICorner")
+local nostun = Instance.new("TextButton")
+local nostuncorn = Instance.new("UICorner")
+local gui2 = Instance.new("TextButton")
+local g2corn = Instance.new("UICorner")
+local bad = Instance.new("TextButton")
+local badcorn = Instance.new("UICorner")
+local hit = Instance.new("TextButton")
+local hitcorn = Instance.new("UICorner")
+local label = Instance.new("TextLabel")
+local labelcorn = Instance.new("UICorner")
+local close = Instance.new("TextButton")
+local closecorn = Instance.new("UICorner")
+local maincorn = Instance.new("UICorner")
+local openmain = Instance.new("Frame")
+local openmcorn = Instance.new("UICorner")
+local open = Instance.new("TextButton")
+local opencorn = Instance.new("UICorner")
+ 
+--Properties:
+ 
+ScreenGui.Parent = game.CoreGui
+ 
+main.Name = "main"
+main.Parent = ScreenGui
+main.BackgroundColor3 = Color3.fromRGB(0, 0, 127)
+main.Position = UDim2.new(0.333941638, 0, 0.204797015, 0)
+main.Size = UDim2.new(0, 405, 0, 252)
+main.Visible = false
+main.Active = true
+main.Draggable = true
+ 
+staystun.Name = "staystun"
+staystun.Parent = main
+staystun.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+staystun.BorderColor3 = Color3.fromRGB(85, 255, 255)
+staystun.Position = UDim2.new(0.023391813, 0, 0.263368845, 0)
+staystun.Size = UDim2.new(0, 200, 0, 50)
+staystun.Font = Enum.Font.GothamBold
+staystun.Text = "Button 1 : Click Before Button 2"
+staystun.TextColor3 = Color3.fromRGB(0, 0, 0)
+staystun.TextSize = 14.000
+staystun.TextWrapped = true
+staystun.MouseButton1Down:connect(function()
+	loadstring(game:HttpGet('https://pastebin.com/raw/pdnVWupS'))()
+end)
+ 
+staycorn.Name = "staycorn"
+staycorn.Parent = staystun
+ 
+nostun.Name = "nostun"
+nostun.Parent = main
+nostun.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+nostun.Position = UDim2.new(0.023391813, 0, 0.497114003, 0)
+nostun.Size = UDim2.new(0, 200, 0, 50)
+nostun.Font = Enum.Font.GothamBold
+nostun.Text = "Button 2 : No Stun"
+nostun.TextColor3 = Color3.fromRGB(0, 0, 0)
+nostun.TextSize = 14.000
+nostun.MouseButton1Down:connect(function()
+	loadstring(game:HttpGet('https://pastebin.com/raw/2uUpwvAf'))()
+end)
+ 
+nostuncorn.Name = "nostuncorn"
+nostuncorn.Parent = nostun
+ 
+gui2.Name = "gui2"
+gui2.Parent = main
+gui2.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+gui2.Position = UDim2.new(0.023391813, 0, 0.728571415, 0)
+gui2.Size = UDim2.new(0, 200, 0, 50)
+gui2.Font = Enum.Font.GothamBold
+gui2.Text = "Other OP gui"
+gui2.TextColor3 = Color3.fromRGB(0, 0, 0)
+gui2.TextSize = 14.000
+gui2.MouseButton1Down:connect(function()
+	loadstring(game:HttpGet("https://gist.githubusercontent.com/coolguywithabigdong/965c150473d6030b1e2a6e88294cc8ee/raw/cc50b977760cc21254e363c603ccdd1c4936392b/gistfile1.txt", true))()
+end)
+ 
+g2corn.Name = "g2corn"
+g2corn.Parent = gui2
+ 
+bad.Name = "bad"
+bad.Parent = main
+bad.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+bad.Position = UDim2.new(0.583755612, 0, 0.261832625, 0)
+bad.Size = UDim2.new(0, 148, 0, 77)
+bad.Font = Enum.Font.GothamBold
+bad.Text = "Bad word GUI O_O (your account needs to be age 13+)"
+bad.TextColor3 = Color3.fromRGB(0, 0, 0)
+bad.TextSize = 14.000
+bad.TextWrapped = true
+bad.MouseButton1Down:connect(function()
+	loadstring(game:HttpGet('https://raw.githubusercontent.com/bedra45/chetbypasser/main/chetbypass'))()
+end)
+ 
+badcorn.Name = "badcorn"
+badcorn.Parent = bad
+ 
+hit.Name = "hit"
+hit.Parent = main
+hit.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+hit.Position = UDim2.new(0.583755612, 0, 0.59523809, 0)
+hit.Size = UDim2.new(0, 147, 0, 78)
+hit.Font = Enum.Font.GothamBold
+hit.Text = "Hitbox Expander (works if you get kinda close to the enemy)"
+hit.TextColor3 = Color3.fromRGB(0, 0, 0)
+hit.TextSize = 14.000
+hit.TextWrapped = true
+hit.MouseButton1Down:connect(function()
+_G.HeadSize = 20
+_G.Disabled = true
+
+game:GetService('RunService').RenderStepped:connect(function()
+if _G.Disabled then
+for i,v in next, game:GetService('Players'):GetPlayers() do
+if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+pcall(function()
+v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
+v.Character.HumanoidRootPart.Transparency = 1
+v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really blue")
+v.Character.HumanoidRootPart.Material = "Neon"
+v.Character.HumanoidRootPart.CanCollide = false
+end)
+end
+end
+end
+end)
+hitcorn.Name = "hitcorn"
+hitcorn.Parent = hit
+ 
+label.Name = "label"
+label.Parent = main
+label.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+label.Position = UDim2.new(0.190123454, 0, 0.0346320607, 0)
+label.Size = UDim2.new(0, 249, 0, 46)
+label.Font = Enum.Font.GothamBold
+label.Text = "No Stun GUI v1.1"
+label.TextColor3 = Color3.fromRGB(0, 0, 0)
+label.TextSize = 14.000
+ 
+labelcorn.Name = "labelcorn"
+labelcorn.Parent = label
+ 
+close.Name = "close"
+close.Parent = main
+close.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+close.Position = UDim2.new(0.901234567, 0, 0.0674603209, 0)
+close.Size = UDim2.new(0, 31, 0, 29)
+close.Font = Enum.Font.GothamBold
+close.Text = "X"
+close.TextColor3 = Color3.fromRGB(0, 0, 0)
+close.TextSize = 17.000
+close.TextWrapped = true
+close.MouseButton1Down:connect(function()
+	main.Visible = false
+	openmain.Visible = true
+end)
+ 
+closecorn.CornerRadius = UDim.new(0, 10)
+closecorn.Name = "closecorn"
+closecorn.Parent = close
+ 
+maincorn.Name = "maincorn"
+maincorn.Parent = main
+ 
+openmain.Name = "openmain"
+openmain.Parent = ScreenGui
+openmain.BackgroundColor3 = Color3.fromRGB(0, 0, 127)
+openmain.Position = UDim2.new(0, 0, 0.405870497, 0)
+openmain.Size = UDim2.new(0, 100, 0, 50)
+openmain.Active = true
+openmain.Draggable = true
+ 
+openmcorn.Name = "openmcorn"
+openmcorn.Parent = openmain
+ 
+open.Name = "open"
+open.Parent = openmain
+open.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+open.Position = UDim2.new(0, 0, -0.132257074, 0)
+open.Size = UDim2.new(0, 100, 0, 49)
+open.Font = Enum.Font.GothamBold
+open.Text = "OPEN"
+open.TextColor3 = Color3.fromRGB(0, 0, 0)
+open.TextSize = 18.000
+open.MouseButton1Down:connect(function()
+	openmain.Visible = false
+	main.Visible = true
+end)
+ 
+opencorn.Name = "opencorn"
+opencorn.Parent = open
