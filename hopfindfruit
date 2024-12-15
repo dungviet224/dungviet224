@@ -1,0 +1,330 @@
+-- Table settings for ESP Devil Fruit
+local Settings = {
+    ESPEnabled = true, -- Enable/Disable ESP
+    AutoBuyFruitZioles = true, -- Enable/Disable Auto Buy Fruit
+    Auto_Trade_Bone = true, -- Enable/Disable Auto Trade Bone
+    WebhookEnabled = true, -- Enable/Disable Discord Webhook Notifications
+    WebhookURL = "https://discord.com/api/webhooks/1053894709459812372/QnW7ZABnM81sN8MB68Iz0A_flwh8D2c9_ko4_oIoMDRvWPGTSPhGZelJn7EJY6uNTuYV", -- Discord Webhook URL
+    AutoTweenToFruit = true, -- Enable/Disable Tween to Fruit
+    TweenSpeed = 150, -- Speed of Tween (default: 50)
+    Team = "Pirate", -- Default team setting ("Pirate" or "Marine")
+    WhiteScreen = false -- Enable/Disable White Screen
+}
+
+repeat wait()until game.Players.LocalPlayer and game:IsLoaded()
+wait("3")
+-- Enable/Disable White Screen
+if Settings.WhiteScreen then
+    game:GetService("RunService"):Set3dRenderingEnabled(false)
+else
+    game:GetService("RunService"):Set3dRenderingEnabled(true)
+end
+
+-- Create a small GUI to display status
+local ScreenGui = Instance.new("ScreenGui")
+local StatusLabel = Instance.new("TextLabel")
+
+ScreenGui.Parent = game.CoreGui
+StatusLabel.Parent = ScreenGui
+
+StatusLabel.Size = UDim2.new(0, 200, 0, 50)
+StatusLabel.Position = UDim2.new(0, 100, 0, 30)
+StatusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+StatusLabel.BackgroundTransparency = 0.3
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextSize = 16
+StatusLabel.Text = "Loading script..."
+
+local function updateStatus(text)
+    StatusLabel.Text = text
+end
+
+-- Function to choose a team
+
+if Settings.Team == "Pirate" then
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam","Pirates") 
+elseif Settings.Team == "Marine" then
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam","Marines") 
+else
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam","Marines") 
+end
+wait(3) -- Wait 3 seconds before proceeding
+
+updateStatus("Script loaded")
+
+-- Function to enable ESP for Devil Fruits
+local function enableESP()
+    pcall(function()
+        for i, v in pairs(game.Workspace:GetChildren()) do
+            if v:IsA("Tool") and v:FindFirstChild("Handle") then
+                if not v.Handle:FindFirstChild("DevilFruitESP") then
+                    local BillboardGui = Instance.new("BillboardGui")
+                    local TextLabel = Instance.new("TextLabel")
+
+                    BillboardGui.Parent = v.Handle
+                    BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                    BillboardGui.Active = true
+                    BillboardGui.Name = "DevilFruitESP"
+                    BillboardGui.AlwaysOnTop = true
+                    BillboardGui.LightInfluence = 1.000
+                    BillboardGui.Size = UDim2.new(0, 200, 0, 50)
+                    BillboardGui.StudsOffset = Vector3.new(0, 2.5, 0) -- Default offset
+
+                    TextLabel.Parent = BillboardGui
+                    TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    TextLabel.BackgroundTransparency = 1.000
+                    TextLabel.Size = UDim2.new(0, 200, 0, 50)
+                    TextLabel.Font = Enum.Font.GothamBold
+                    TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Default color
+                    TextLabel.FontSize = "Size14" -- Default font size
+                    TextLabel.TextStrokeTransparency = 0.5 -- Default text stroke transparency
+                end
+                local Dis = math.floor((game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Handle.Position).Magnitude)
+                v.Handle.DevilFruitESP.TextLabel.Text = v.Name .. "\n" .. Dis .. " M."
+            end
+        end
+    end)
+end
+
+-- Function to disable ESP for Devil Fruits
+local function disableESP()
+    for i, v in pairs(game.Workspace:GetChildren()) do
+        if v:IsA("Tool") and v:FindFirstChild("Handle") and v.Handle:FindFirstChild("DevilFruitESP") then
+            v.Handle.DevilFruitESP:Destroy()
+        end
+    end
+end
+
+-- ESP control loop
+spawn(function()
+    while wait() do
+        if Settings.ESPEnabled then
+            enableESP()
+        else
+            disableESP()
+        end
+    end
+end)
+
+-- Function to send Discord webhook notification
+local function sendWebhookNotification(playerName, fruitName)
+    if Settings.WebhookEnabled and Settings.WebhookURL ~= "" then
+        local httpService = game:GetService("HttpService")
+        local payload = {
+            ["content"] = playerName .. " has successfully stored the fruit: " .. fruitName
+        }
+        local jsonPayload = httpService:JSONEncode(payload)
+
+        pcall(function()
+            httpService:PostAsync(Settings.WebhookURL, jsonPayload, Enum.HttpContentType.ApplicationJson)
+        end)
+    end
+end
+
+-- Auto store fruits function
+local function StoredFruited(name_1, name_2)
+    local Character = game:GetService("Players").LocalPlayer.Character
+    local Backpack = game:GetService("Players").LocalPlayer.Backpack
+    local CommF_ = game:GetService("ReplicatedStorage").Remotes.CommF_
+    if Character:FindFirstChild(name_2) or Backpack:FindFirstChild(name_2) then
+        local args = {
+            [1] = "StoreFruit",
+            [2] = name_1,
+            [3] = Character:FindFirstChild(name_2) or Backpack:FindFirstChild(name_2) 
+        }
+        CommF_:InvokeServer(unpack(args))
+        sendWebhookNotification(game.Players.LocalPlayer.Name, name_1)
+    end
+end
+-- Function to Tween to fruit using Heartbeat
+local function tweenToFruit(fruitHandle)
+    local RunService = game:GetService("RunService")
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    -- Calculate distance to fruit
+    local distance = (humanoidRootPart.Position - fruitHandle.Position).Magnitude
+
+    -- If distance is less than 100, teleport instantly
+    if distance <= 100 then
+        humanoidRootPart.CFrame = fruitHandle.CFrame
+        return
+    end
+
+    -- Calculate travel time based on speed
+    local travelTime = distance / Settings.TweenSpeed
+    local startTime = tick()
+    local startPosition = humanoidRootPart.Position
+    local goalPosition = fruitHandle.Position
+
+    -- Disable collisions
+    local originalCollision = humanoidRootPart.CanCollide
+    humanoidRootPart.CanCollide = false
+
+    -- Heartbeat connection for smooth movement
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        local elapsedTime = tick() - startTime
+        if elapsedTime >= travelTime then
+            -- End of tween
+            humanoidRootPart.Position = goalPosition
+            humanoidRootPart.CanCollide = originalCollision
+            connection:Disconnect()
+        else
+            -- Calculate progress and interpolate position
+            local progress = elapsedTime / travelTime
+            local newPosition = startPosition:Lerp(goalPosition, progress)
+            humanoidRootPart.CFrame = CFrame.new(newPosition)
+        end
+    end)
+end
+
+
+-- Auto store fruits loop
+spawn(function()
+    while task.wait() do
+        local foundFruit = false
+        pcall(function()
+            for _, fruit in pairs(game.Workspace:GetChildren()) do
+                if fruit:IsA("Tool") and fruit:FindFirstChild("Handle") then
+                    foundFruit = true
+                    updateStatus("Tweening to fruit")
+                    if Settings.AutoTweenToFruit then
+                        tweenToFruit(fruit.Handle)
+                    end
+                    StoredFruited(fruit.Name, fruit.Name .. " Fruit")
+                end
+            end
+        end)
+        -- Hop server if no fruit is found after 5 seconds
+        if not foundFruit then
+            updateStatus("Hopping server")
+            wait("5")
+            while wait(5) do
+                teleport()
+            end 
+        end
+    end
+end)
+local PlaceID = game.PlaceId
+local AllIDs = {}
+local foundAnything = ""
+local actualHour = os.date("!*t").hour
+local Deleted = false
+--[[
+local File = pcall(function()
+    AllIDs = game:GetService('HttpService'):JSONDecode(readfile("NotSameServers.json"))
+end)
+if not File then
+    table.insert(AllIDs, actualHour)
+    writefile("NotSameServers.json", game:GetService('HttpService'):JSONEncode(AllIDs))
+end
+]]
+function TPReturner()
+    local Site;
+    if foundAnything == "" then
+        Site = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. PlaceID .. '/servers/Public?sortOrder=Asc&limit=100'))
+    else
+        Site = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. PlaceID .. '/servers/Public?sortOrder=Asc&limit=100&cursor=' .. foundAnything))
+    end
+    local ID = ""
+    if Site.nextPageCursor and Site.nextPageCursor ~= "null" and Site.nextPageCursor ~= nil then
+        foundAnything = Site.nextPageCursor
+    end
+    local num = 0;
+    for i,v in pairs(Site.data) do
+        local Possible = true
+        ID = tostring(v.id)
+        if tonumber(v.maxPlayers) > tonumber(v.playing) then
+            for _,Existing in pairs(AllIDs) do
+                if num ~= 0 then
+                    if ID == tostring(Existing) then
+                        Possible = false
+                    end
+                else
+                    if tonumber(actualHour) ~= tonumber(Existing) then
+                        local delFile = pcall(function()
+                            -- delfile("NotSameServers.json")
+                            AllIDs = {}
+                            table.insert(AllIDs, actualHour)
+                        end)
+                    end
+                end
+                num = num + 1
+            end
+            if Possible == true then
+                table.insert(AllIDs, ID)
+                wait()
+                pcall(function()
+                    -- writefile("NotSameServers.json", game:GetService('HttpService'):JSONEncode(AllIDs))
+                    wait()
+                    game:GetService("TeleportService"):TeleportToPlaceInstance(PlaceID, ID, game.Players.LocalPlayer)
+                end)
+                wait(4)
+            end
+        end
+    end
+end
+
+function Teleport()
+    while wait() do
+        pcall(function()
+            TPReturner()
+            if foundAnything ~= "" then
+                TPReturner()
+            end
+        end)
+    end
+end
+
+-- Auto buy fruit loop
+spawn(function()
+    while task.wait(1) do
+        if Settings.AutoBuyFruitZioles then
+            pcall(function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Cousin", "Buy")
+            end)
+        end
+    end
+end)
+
+-- Auto trade bone loop
+spawn(function()
+    while task.wait(1) do
+        if Settings.Auto_Trade_Bone then
+            pcall(function()
+                local args = {
+                    [1] = "Bones",
+                    [2] = "Buy",
+                    [3] = 1,
+                    [4] = 1
+                }
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+            end)
+        end
+    end
+end)
+--auto rejoin when kicked
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+
+local function onErrorMessageChanged(errorMessage)
+    if errorMessage and errorMessage ~= "" then
+        print("Error detected: " .. errorMessage)
+
+        if player then
+            wait()
+            TeleportService:Teleport(game.PlaceId, player)
+        end
+    end
+end
+
+GuiService.ErrorMessageChanged:Connect(onErrorMessageChanged)
