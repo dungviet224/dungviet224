@@ -1,0 +1,65 @@
+local remote = game:GetService("ReplicatedStorage").Modules.Net["RE/ShootGunEvent"]
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local range = 10000000 -- Phạm vi kill aura
+local canFire = false -- Trạng thái bắn
+local firingTime = 3 -- Thời gian bắn liên tục (giây)
+
+-- Quản lý mục tiêu
+local targetEnemies = true -- Bắn enemies
+local targetPlayers = true -- Bắn players
+print("cc")
+-- Hàm kiểm tra và bắn mục tiêu
+local function shootTarget()
+    if targetEnemies then
+        for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+            if enemy:IsA("Model") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") then
+                local enemyRoot = enemy.HumanoidRootPart
+                local distance = (rootPart.Position - enemyRoot.Position).Magnitude
+
+                if distance <= range then
+                    remote:FireServer(
+                        rootPart.Position, -- Vị trí của nhân vật
+                        {enemyRoot}         -- Bảng chứa mục tiêu
+                    )
+                end
+            end
+        end
+    end
+
+    if targetPlayers then
+        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local otherRoot = otherPlayer.Character.HumanoidRootPart
+                local distance = (rootPart.Position - otherRoot.Position).Magnitude
+
+                if distance <= range then
+                    remote:FireServer(
+                        rootPart.Position, -- Vị trí của nhân vật
+                        {otherRoot}         -- Bảng chứa mục tiêu
+                    )
+                end
+            end
+        end
+    end
+end
+
+-- Lắng nghe sự kiện chuột trái
+local userInput = game:GetService("UserInputService")
+userInput.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Bỏ qua nếu sự kiện đã được xử lý
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then -- Phát hiện chuột trái
+        if not canFire then
+            canFire = true
+            task.spawn(function()
+                local endTime = tick() + firingTime
+                while tick() < endTime do
+                    shootTarget()
+                    task.wait(0.05) -- Đợi một chút trước khi bắn tiếp
+                end
+                canFire = false -- Dừng bắn sau 3 giây
+            end)
+        end
+    end
+end)
