@@ -36,6 +36,8 @@ function Tween(P1)
     local Speed = 350
 	if  Distance < 200 then
 		Speed = 5000
+	else
+		Speed = 350
 	end
     if ActiveTween then
         ActiveTween:Cancel()
