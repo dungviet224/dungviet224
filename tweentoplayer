@@ -33,11 +33,11 @@ getgenv().NoClip = false
 --// TWEEN FUNCTION
 function Tween(P1)
     local Distance = (P1.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-    local Speed = 350
-	if  Distance < 250 then
+    local Speed = 360
+	if  Distance < 150 then
 		Speed = 5000
 	else
-		Speed = 350
+		Speed = 360
 	end
     if ActiveTween then
         ActiveTween:Cancel()
@@ -95,9 +95,9 @@ ToggleButton.MouseButton1Click:Connect(function()
         ToggleButton.BackgroundColor3 = TweenToPlayer and Color3.new(0.7, 0.3, 0.3) or Color3.new(0.3, 0.7, 0.3)
 
         if TweenToPlayer then
-            AdjustGravity(true)
             getgenv().NoClip = true
             spawn(function()
+			AdjustGravity(true)
                 while TweenToPlayer do
                     task.wait()
                     pcall(function()
@@ -107,7 +107,8 @@ ToggleButton.MouseButton1Click:Connect(function()
                                 and v.Character:FindFirstChild("HumanoidRootPart") 
                                 and v.Character.Humanoid.Health > 0 
                                 and v.Name == SelectedPlayer then
-                                    repeat game:GetService("RunService").Heartbeat:wait()
+                                    repeat game:GetService("RunService").RenderStepped:wait()
+									game.Players.LocalPlayer.Character.Stun.Value = 0
                                         Tween(v.Character.HumanoidRootPart.CFrame)
                                     until not TweenToPlayer or v.Character.Humanoid.Health == 0 or not game.Players:FindFirstChild(v.Name)
                             end
