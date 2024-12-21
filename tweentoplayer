@@ -34,7 +34,7 @@ getgenv().NoClip = false
 function Tween(P1)
     local Distance = (P1.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
     local Speed = 350
-	if  Distance < 200 then
+	if  Distance < 250 then
 		Speed = 5000
 	else
 		Speed = 350
