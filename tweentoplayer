@@ -1,0 +1,131 @@
+--// GUI SETUP
+local ScreenGui = Instance.new("ScreenGui")
+local TextBox = Instance.new("TextBox")
+local ToggleButton = Instance.new("TextButton")
+
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+TextBox.Parent = ScreenGui
+TextBox.Size = UDim2.new(0, 200, 0, 50)
+TextBox.Position = UDim2.new(0.5, -100, 0.1, 0)
+TextBox.Text = "Enter Player Name"
+TextBox.PlaceholderText = "Player Name"
+TextBox.TextScaled = true
+TextBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+TextBox.TextColor3 = Color3.new(1, 1, 1)
+TextBox.ClearTextOnFocus = true
+
+ToggleButton.Parent = ScreenGui
+ToggleButton.Size = UDim2.new(0, 200, 0, 50)
+ToggleButton.Position = UDim2.new(0.5, -100, 0.2, 0)
+ToggleButton.Text = "Start Tween"
+ToggleButton.TextScaled = true
+ToggleButton.BackgroundColor3 = Color3.new(0.3, 0.7, 0.3)
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+
+--// VARIABLES
+local TweenToPlayer = false
+local SelectedPlayer = ""
+local ActiveTween = nil
+getgenv().NoClip = false
+
+--// TWEEN FUNCTION
+function Tween(P1)
+    local Distance = (P1.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+    local Speed = 350
+	if  Distance < 200 then
+		Speed = 5000
+	end
+    if ActiveTween then
+        ActiveTween:Cancel()
+    end
+    ActiveTween = game:GetService("TweenService"):Create(
+        game.Players.LocalPlayer.Character.HumanoidRootPart,
+        TweenInfo.new(Distance / Speed, Enum.EasingStyle.Linear),
+        {CFrame = P1}
+    )
+    ActiveTween:Play()
+end
+
+--// HANDLE GRAVITY ADJUSTMENTS
+function AdjustGravity(enable)
+    local HumanoidRootPart = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not HumanoidRootPart then return end
+
+    if enable then
+        if not HumanoidRootPart:FindFirstChild("BodyClip") then
+            local Noclip = Instance.new("BodyVelocity")
+            Noclip.Name = "BodyClip"
+            Noclip.Parent = HumanoidRootPart
+            Noclip.MaxForce = Vector3.new(100000, 100000, 100000)
+            Noclip.Velocity = Vector3.new(0, 0, 0)
+        end
+    else
+        local BodyClip = HumanoidRootPart:FindFirstChild("BodyClip")
+        if BodyClip then
+            BodyClip:Destroy()
+        end
+    end
+end
+
+--// NOCLIP FUNCTION
+spawn(function()
+    pcall(function()
+        game:GetService("RunService").Stepped:Connect(function()
+            if getgenv().NoClip then
+                for _, v in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end)
+end)
+
+--// TWEEN LOGIC
+ToggleButton.MouseButton1Click:Connect(function()
+    if TextBox.Text ~= "" then
+        SelectedPlayer = TextBox.Text
+        TweenToPlayer = not TweenToPlayer
+        ToggleButton.Text = TweenToPlayer and "Stop Tween" or "Start Tween"
+        ToggleButton.BackgroundColor3 = TweenToPlayer and Color3.new(0.7, 0.3, 0.3) or Color3.new(0.3, 0.7, 0.3)
+
+        if TweenToPlayer then
+            AdjustGravity(true)
+            getgenv().NoClip = true
+            spawn(function()
+                while TweenToPlayer do
+                    task.wait()
+                    pcall(function()
+                        for _, v in pairs(game.Players:GetChildren()) do
+                            if v.Character 
+                                and v.Character:FindFirstChild("Humanoid") 
+                                and v.Character:FindFirstChild("HumanoidRootPart") 
+                                and v.Character.Humanoid.Health > 0 
+                                and v.Name == SelectedPlayer then
+                                    repeat game:GetService("RunService").Heartbeat:wait()
+                                        Tween(v.Character.HumanoidRootPart.CFrame)
+                                    until not TweenToPlayer or v.Character.Humanoid.Health == 0 or not game.Players:FindFirstChild(v.Name)
+                            end
+                        end
+                    end)
+                end
+                AdjustGravity(false)
+                getgenv().NoClip = false
+                if ActiveTween then
+                    ActiveTween:Cancel()
+                    ActiveTween = nil
+                end
+            end)
+        else
+            AdjustGravity(false)
+            getgenv().NoClip = false
+            if ActiveTween then
+                ActiveTween:Cancel()
+                ActiveTween = nil
+            end
+        end
+    end
+end)
