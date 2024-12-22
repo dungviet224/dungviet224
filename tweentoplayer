@@ -86,6 +86,14 @@ spawn(function()
     end)
 end)
 
+--// HANDLE PLAYER RESPAWN
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1) -- Wait for character to fully load
+    if TweenToPlayer then
+        AdjustGravity(true)
+    end
+end)
+
 --// TWEEN LOGIC
 ToggleButton.MouseButton1Click:Connect(function()
     if TextBox.Text ~= "" then
@@ -97,20 +105,46 @@ ToggleButton.MouseButton1Click:Connect(function()
         if TweenToPlayer then
             getgenv().NoClip = true
             spawn(function()
-			AdjustGravity(true)
+                AdjustGravity(true)
                 while TweenToPlayer do
                     task.wait()
                     pcall(function()
+                        local TargetFound = false
+                        
+                        -- Kiểm tra nếu là người chơi
                         for _, v in pairs(game.Players:GetChildren()) do
                             if v.Character 
                                 and v.Character:FindFirstChild("Humanoid") 
                                 and v.Character:FindFirstChild("HumanoidRootPart") 
                                 and v.Character.Humanoid.Health > 0 
                                 and v.Name == SelectedPlayer then
-                                    repeat game:GetService("RunService").RenderStepped:wait()
-									game.Players.LocalPlayer.Character.Stun.Value = 0
+                                    TargetFound = true
+                                    repeat 
+                                        game:GetService("RunService").RenderStepped:wait()
+                                        game.Players.LocalPlayer.Character.Stun.Value = 0
                                         Tween(v.Character.HumanoidRootPart.CFrame)
                                     until not TweenToPlayer or v.Character.Humanoid.Health == 0 or not game.Players:FindFirstChild(v.Name)
+                            end
+                        end
+
+                        -- Nếu không phải người chơi, kiểm tra nếu là path hoặc biểu thức Lua
+                        if not TargetFound then
+                            local Object = nil
+                            -- Kiểm tra nếu chuỗi chứa "workspace"
+                            if SelectedPlayer:find("workspace") then
+                                -- Thử phân tích chuỗi và tìm đối tượng
+                                local success, result = pcall(function()
+                                    return loadstring("return " .. SelectedPlayer)()
+                                end)
+                                if success and result then
+                                    Object = result
+                                    TargetFound = true
+                                    repeat 
+                                        game:GetService("RunService").RenderStepped:wait()
+                                        game.Players.LocalPlayer.Character.Stun.Value = 0
+                                        Tween(Object.CFrame)
+                                    until not TweenToPlayer or not Object:IsDescendantOf(game)
+                                end
                             end
                         end
                     end)
