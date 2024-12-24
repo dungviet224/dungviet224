@@ -31,21 +31,24 @@ local ActiveTween = nil
 getgenv().NoClip = false
 
 --// TWEEN FUNCTION
+--// TWEEN FUNCTION
 function Tween(P1)
     local Distance = (P1.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
     local Speed = 360
-	if  Distance < 150 then
-		Speed = 5000
-	else
-		Speed = 360
-	end
+    if Distance < 150 then
+        Speed = 5000
+    else
+        Speed = 360
+    end
     if ActiveTween then
         ActiveTween:Cancel()
     end
+    -- Điều chỉnh y-offset (tăng thêm 50 trên trục Y)
+    local TargetPosition = P1.Position + Vector3.new(0, 40, 0)
     ActiveTween = game:GetService("TweenService"):Create(
         game.Players.LocalPlayer.Character.HumanoidRootPart,
         TweenInfo.new(Distance / Speed, Enum.EasingStyle.Linear),
-        {CFrame = P1}
+        {CFrame = CFrame.new(TargetPosition)}
     )
     ActiveTween:Play()
 end
