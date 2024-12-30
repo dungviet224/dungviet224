@@ -33,7 +33,7 @@ local function shootEnemies()
                 task.spawn(function()
                     for _ = 1, shotsPerTarget do
                         remote:FireServer(rootPart.Position, {enemyRoot})
-                        task.wait(0.05) -- Thời gian chờ giữa các phát bắn
+                        task.wait(0.15) -- Thời gian chờ giữa các phát bắn
                     end
                 end)
             end
