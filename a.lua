@@ -1,12 +1,11 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/dungviet224/dungviet224/refs/heads/main/tweentoplayer"))()
 local remote = game:GetService("ReplicatedStorage").Modules.Net["RE/ShootGunEvent"]
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local rootPart = character:WaitForChild("HumanoidRootPart")
 local range = 500 -- Phạm vi kill aura
 local canFire = false -- Trạng thái bắn
-local firingTime = 3 -- Thời gian bắn liên tục (giây) cho enemy
-local shotsPerTarget = 15 -- Số lần bắn mỗi mục tiêu
+local firingTime = 2 -- Thời gian bắn liên tục (giây) cho enemy
+local shotsPerTarget = 15 -- Số lần bắn mỗi người chơi
 
 print("clm")
 
@@ -24,20 +23,19 @@ local function shootEnemies()
     local inCombat = game:GetService("Players").LocalPlayer.PlayerGui.Main.BottomHUDList.InCombat.Visible
     if inCombat then return end -- Bỏ qua nếu đang trong trạng thái combat
 
-    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-        if enemy:IsA("Model") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") then
-            local enemyRoot = enemy.HumanoidRootPart
-            local distance = (rootPart.Position - enemyRoot.Position).Magnitude
+    local endTime = tick() + firingTime
+    while tick() < endTime do
+        for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+            if enemy:IsA("Model") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") then
+                local enemyRoot = enemy.HumanoidRootPart
+                local distance = (rootPart.Position - enemyRoot.Position).Magnitude
 
-            if distance <= range then
-                task.spawn(function()
-                    for _ = 1, shotsPerTarget do
-                        remote:FireServer(rootPart.Position, {enemyRoot})
-                        task.wait(0.15) -- Thời gian chờ giữa các phát bắn
-                    end
-                end)
+                if distance <= range then
+                    remote:FireServer(rootPart.Position, {enemyRoot})
+                end
             end
         end
+        task.wait(0.05) -- Đợi trước khi tiếp tục bắn
     end
 end
 
@@ -84,7 +82,7 @@ end
 local userInput = game:GetService("UserInputService")
 userInput.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end -- Bỏ qua nếu sự kiện đã được xử lý
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then -- Phát hiện chuột trái
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then -- Phát hiện chuột trái
         if not canFire then
             canFire = true
             task.spawn(function()
@@ -94,60 +92,3 @@ userInput.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-local remotes = ReplicatedStorage.Remotes.CommE
-
-local toggleSoru = false
-
-local function getClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = 300 -- 300 meters (studs)
-
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if distance < shortestDistance then
-                closestPlayer = otherPlayer
-                shortestDistance = distance
-            end
-        end
-    end
-
-    return closestPlayer
-end
-
-local function performSoru()
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
-    local closestPlayer = getClosestPlayer()
-    if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local playerCFrame = character.HumanoidRootPart.CFrame
-        local targetCFrame = closestPlayer.Character.HumanoidRootPart.CFrame
-
-        remotes:FireServer("Soru", playerCFrame, targetCFrame, tick(), math.random(1000000, 9999999))
-    end
-end
-
--- Toggle logic
-local UserInputService = game:GetService("UserInputService")
-UserInputService.InputBegan:Connect(function(input, isProcessed)
-    if isProcessed then return end
-    if input.KeyCode == Enum.KeyCode.F then
-        toggleSoru = not toggleSoru
-        print(toggleSoru)
-    end
-end)
-
--- Continuously perform Soru when toggled
-RunService.RenderStepped:Connect(function()
-    if toggleSoru then
-        performSoru()
-        task.wait(0.01) -- Adjust delay as needed
-    end
-end)
-print("A")
