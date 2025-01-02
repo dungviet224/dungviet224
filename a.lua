@@ -17,14 +17,15 @@ end
 
 -- Kết nối sự kiện tái tạo nhân vật
 player.CharacterAdded:Connect(updateCharacter)
-
--- Hàm bắn enemy
+-- Thêm target là tất cả con SeaBeast trong workspace
+-- Thêm target từ workspace.Enemies.PirateGrandBrigade.Body:GetChildren()
 local function shootEnemies()
     local inCombat = game:GetService("Players").LocalPlayer.PlayerGui.Main.BottomHUDList.InCombat.Visible
     if inCombat then return end -- Bỏ qua nếu đang trong trạng thái combat
 
     local endTime = tick() + firingTime
     while tick() < endTime do
+        -- Bắn Enemy
         for _, enemy in pairs(workspace.Enemies:GetChildren()) do
             if enemy:IsA("Model") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") then
                 local enemyRoot = enemy.HumanoidRootPart
@@ -35,6 +36,32 @@ local function shootEnemies()
                 end
             end
         end
+
+        -- Bắn SeaBeasts
+        for _, seaBeast in pairs(workspace.SeaBeasts:GetChildren()) do
+            if seaBeast:IsA("Model") and seaBeast:FindFirstChild("HumanoidRootPart") then
+                local seaBeastRoot = seaBeast.HumanoidRootPart
+                local distance = (rootPart.Position - seaBeastRoot.Position).Magnitude
+
+                if distance <= range then
+                    remote:FireServer(rootPart.Position, {seaBeastRoot})
+                end
+            end
+        end
+
+        -- Bắn PirateGrandBrigade Body
+        local pirateGrandBrigade = workspace.Enemies:FindFirstChild("PirateGrandBrigade") or workspace.Enemies:FindFirstChild("PirateBrigade") or workspace.Enemies:FindFirstChild("FishBoat")
+        if pirateGrandBrigade and pirateGrandBrigade:FindFirstChild("Body") then
+            for _, part in pairs(pirateGrandBrigade.Body:GetChildren()) do
+                if part:IsA("BasePart") then
+                    local distance = (rootPart.Position - part.Position).Magnitude
+
+                    if distance <= range then
+                        remote:FireServer(rootPart.Position, {part})
+                    end
+                end
+            end
+        end
         task.wait(0.05) -- Đợi trước khi tiếp tục bắn
     end
 end
@@ -42,6 +69,10 @@ end
 -- Hàm bắn người chơi
 local function shootPlayers()
     for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer.Name == "AFAmMNoaff" then
+            continue -- Bỏ qua người chơi có tên "AFAmMNoaff"
+        end
+
         if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
             -- Logic bỏ qua bắn nếu người chơi và target đều là Marines
             if player.Team and otherPlayer.Team then
@@ -63,6 +94,7 @@ local function shootPlayers()
         end
     end
 end
+
 
 -- Hàm kiểm tra và bắn mục tiêu
 local function shootTarget()
