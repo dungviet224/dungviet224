@@ -1,0 +1,388 @@
+local CustomUI = {}
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Constants
+local TWEEN_SPEED = 0.2
+local CORNER_RADIUS = UDim.new(0, 5)
+local PADDING = UDim.new(0, 10)
+
+-- Utility functions
+local function CreateInstance(className, properties)
+    local instance = Instance.new(className)
+    for property, value in pairs(properties) do
+        instance[property] = value
+    end
+    return instance
+end
+
+-- Main Window class
+CustomUI.Window = {}
+CustomUI.Window.__index = CustomUI.Window
+
+function CustomUI.new(title)
+    local window = {}
+    setmetatable(window, CustomUI.Window)
+    
+    -- Main GUI
+    window.ScreenGui = CreateInstance("ScreenGui", {
+        Name = "CustomUI",
+        Parent = game.CoreGui,
+        ResetOnSpawn = false
+    })
+    
+    -- Main Frame
+    window.MainFrame = CreateInstance("Frame", {
+        Name = "MainFrame",
+        Parent = window.ScreenGui,
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        Position = UDim2.new(0.5, -150, 0.5, -100),
+        Size = UDim2.new(0, 300, 0, 200),
+        ClipsDescendants = true
+    })
+    
+    -- Title Bar
+    window.TitleBar = CreateInstance("Frame", {
+        Name = "TitleBar",
+        Parent = window.MainFrame,
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        Size = UDim2.new(1, 0, 0, 30)
+    })
+    
+    -- Title Text
+    window.TitleText = CreateInstance("TextLabel", {
+        Name = "Title",
+        Parent = window.TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -20, 1, 0),
+        Font = Enum.Font.SourceSansBold,
+        Text = title,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    -- Content Frame
+    window.ContentFrame = CreateInstance("ScrollingFrame", {
+        Name = "Content",
+        Parent = window.MainFrame,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 35),
+        Size = UDim2.new(1, 0, 1, -35),
+        ScrollBarThickness = 4,
+        ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    })
+    
+    -- UI Layout
+    window.UIListLayout = CreateInstance("UIListLayout", {
+        Parent = window.ContentFrame,
+        Padding = PADDING,
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+    
+    -- Corner Radius
+    CreateInstance("UICorner", {
+        Parent = window.MainFrame,
+        CornerRadius = CORNER_RADIUS
+    })
+    
+    -- Make window draggable
+    local dragging, dragStart, startPos
+    
+    window.TitleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = window.MainFrame.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            window.MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    return window
+end
+
+-- Button Component
+function CustomUI.Window:AddButton(text, callback)
+    local button = CreateInstance("TextButton", {
+        Name = "Button",
+        Parent = self.ContentFrame,
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        Size = UDim2.new(1, -20, 0, 30),
+        Position = UDim2.new(0, 10, 0, 0),
+        Font = Enum.Font.SourceSans,
+        Text = text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = button,
+        CornerRadius = CORNER_RADIUS
+    })
+    
+    -- Hover effect
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(TWEEN_SPEED), {
+            BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        }):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(TWEEN_SPEED), {
+            BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        }):Play()
+    end)
+    
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- Toggle Component
+function CustomUI.Window:AddToggle(text, default, callback)
+    local toggle = CreateInstance("Frame", {
+        Name = "Toggle",
+        Parent = self.ContentFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -20, 0, 30),
+        Position = UDim2.new(0, 10, 0, 0)
+    })
+    
+    local label = CreateInstance("TextLabel", {
+        Parent = toggle,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -50, 1, 0),
+        Font = Enum.Font.SourceSans,
+        Text = text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local toggleButton = CreateInstance("TextButton", {
+        Parent = toggle,
+        BackgroundColor3 = default and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 50),
+        Position = UDim2.new(1, -40, 0.5, -10),
+        Size = UDim2.new(0, 40, 0, 20),
+        Text = ""
+    })
+    
+    local circle = CreateInstance("Frame", {
+        Parent = toggleButton,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
+        Size = UDim2.new(0, 16, 0, 16)
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = toggleButton,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = circle,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    local enabled = default
+    toggleButton.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        local circlePosition = enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        local toggleColor = enabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 50)
+        
+        TweenService:Create(circle, TweenInfo.new(TWEEN_SPEED), {
+            Position = circlePosition
+        }):Play()
+        
+        TweenService:Create(toggleButton, TweenInfo.new(TWEEN_SPEED), {
+            BackgroundColor3 = toggleColor
+        }):Play()
+        
+        callback(enabled)
+    end)
+    
+    return toggle
+end
+
+-- Slider Component
+function CustomUI.Window:AddSlider(text, min, max, default, callback)
+    local slider = CreateInstance("Frame", {
+        Name = "Slider",
+        Parent = self.ContentFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -20, 0, 50),
+        Position = UDim2.new(0, 10, 0, 0)
+    })
+    
+    local label = CreateInstance("TextLabel", {
+        Parent = slider,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 20),
+        Font = Enum.Font.SourceSans,
+        Text = text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local sliderBar = CreateInstance("Frame", {
+        Parent = slider,
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        Position = UDim2.new(0, 0, 0, 25),
+        Size = UDim2.new(1, 0, 0, 4)
+    })
+    
+    local sliderFill = CreateInstance("Frame", {
+        Parent = sliderBar,
+        BackgroundColor3 = Color3.fromRGB(0, 170, 255),
+        Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+    })
+    
+    local sliderButton = CreateInstance("TextButton", {
+        Parent = sliderBar,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Position = UDim2.new((default - min)/(max - min), -6, 0.5, -6),
+        Size = UDim2.new(0, 12, 0, 12),
+        Text = ""
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = sliderBar,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = sliderFill,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = sliderButton,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    local value = default
+    local dragging = false
+    
+    local function updateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+        value = math.floor(min + (max - min) * pos)
+        
+        TweenService:Create(sliderFill, TweenInfo.new(TWEEN_SPEED), {
+            Size = UDim2.new(pos, 0, 1, 0)
+        }):Play()
+        
+        TweenService:Create(sliderButton, TweenInfo.new(TWEEN_SPEED), {
+            Position = UDim2.new(pos, -6, 0.5, -6)
+        }):Play()
+        
+        callback(value)
+    end
+    
+    sliderButton.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSlider(input)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    return slider
+end
+
+-- Dropdown Component
+function CustomUI.Window:AddDropdown(text, options, default, callback)
+    local dropdown = CreateInstance("Frame", {
+        Name = "Dropdown",
+        Parent = self.ContentFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -20, 0, 30),
+        Position = UDim2.new(0, 10, 0, 0)
+    })
+    
+    local dropdownButton = CreateInstance("TextButton", {
+        Parent = dropdown,
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        Size = UDim2.new(1, 0, 1, 0),
+        Font = Enum.Font.SourceSans,
+        Text = default or text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14
+    })
+    
+    local optionsFrame = CreateInstance("Frame", {
+        Parent = dropdown,
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        Position = UDim2.new(0, 0, 1, 5),
+        Size = UDim2.new(1, 0, 0, #options * 25),
+        Visible = false,
+        ZIndex = 2
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = dropdownButton,
+        CornerRadius = CORNER_RADIUS
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = optionsFrame,
+        CornerRadius = CORNER_RADIUS
+    })
+    
+    local function createOption(optionText, index)
+        local option = CreateInstance("TextButton", {
+            Parent = optionsFrame,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 0, 0, (index - 1) * 25),
+            Size = UDim2.new(1, 0, 0, 25),
+            Font = Enum.Font.SourceSans,
+            Text = optionText,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 14,
+            ZIndex = 2
+        })
+        
+        option.MouseButton1Click:Connect(function()
+            dropdownButton.Text = optionText
+            optionsFrame.Visible = false
+            callback(optionText)
+        end)
+    end
+    
+    for i, option in ipairs(options) do
+        createOption(option, i)
+    end
+    
+    dropdownButton.MouseButton1Click:Connect(function()
+        optionsFrame.Visible = not optionsFrame.Visible
+    end)
+    
+    return dropdown
+end
+
+return CustomUI
