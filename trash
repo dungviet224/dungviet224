@@ -19,8 +19,8 @@ function Library:CreateWindow(name)
     local mainFrame = self:CreateElement("Frame", {
         Name = "MainFrame",
         Parent = window,
-        Size = UDim2.new(0, 300, 0, 400),
-        Position = UDim2.new(0.5, -150, 0.5, -200),
+        Size = UDim2.new(0, 400, 0, 300),
+        Position = UDim2.new(0.5, -200, 0.5, -150),
         BackgroundColor3 = Color3.fromRGB(40, 40, 40),
         ClipsDescendants = true
     })
@@ -61,12 +61,12 @@ function Library:CreateWindow(name)
     }
 end
 
--- Create a tab
+-- Create a horizontal tab
 function Library:CreateTab(window, name)
     local tabButton = self:CreateElement("TextButton", {
         Name = name,
         Parent = window.TabContainer,
-        Size = UDim2.new(0.5, 0, 1, 0),
+        Size = UDim2.new(0.2, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Color3.fromRGB(60, 60, 60),
         Text = name,
@@ -94,7 +94,7 @@ function Library:CreateTab(window, name)
     return tabContent
 end
 
--- Create a button
+-- Create a button with auto-animation
 function Library:CreateButton(parent, name, callback)
     local button = self:CreateElement("TextButton", {
         Name = name,
@@ -108,86 +108,107 @@ function Library:CreateButton(parent, name, callback)
         Font = Enum.Font.SourceSans
     })
 
-    button.MouseButton1Click:Connect(callback)
+    button.MouseButton1Click:Connect(function()
+        self:Animate(button, "BackgroundColor3", Color3.fromRGB(100, 100, 100), 0.2, function()
+            self:Animate(button, "BackgroundColor3", Color3.fromRGB(70, 70, 70), 0.2)
+        end)
+        callback()
+    end)
+
     return button
 end
 
--- Create a textbox
-function Library:CreateTextBox(parent, placeholder)
-    local textBox = self:CreateElement("TextBox", {
-        Name = "TextBox",
+-- Create a slider with auto-animation
+function Library:CreateSlider(parent, name, min, max, callback)
+    local slider = self:CreateElement("Frame", {
+        Name = name,
         Parent = parent,
         Size = UDim2.new(0.8, 0, 0, 30),
         Position = UDim2.new(0.1, 0, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        Text = "",
-        PlaceholderText = placeholder,
-        TextColor3 = Color3.fromRGB(0, 0, 0),
-        TextSize = 14,
-        Font = Enum.Font.SourceSans
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     })
 
-    return textBox
-end
+    local sliderFill = self:CreateElement("Frame", {
+        Name = "SliderFill",
+        Parent = slider,
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    })
 
--- Create a dropdown
-function Library:CreateDropdown(parent, options)
-    local dropdown = self:CreateElement("TextButton", {
-        Name = "Dropdown",
-        Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 30),
-        Position = UDim2.new(0.1, 0, 0, 80),
-        BackgroundColor3 = Color3.fromRGB(80, 80, 80),
-        Text = "Select an option",
+    local sliderText = self:CreateElement("TextLabel", {
+        Name = "SliderText",
+        Parent = slider,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = name .. ": " .. min,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
         Font = Enum.Font.SourceSans
     })
 
-    local dropdownFrame = self:CreateElement("Frame", {
-        Name = "DropdownFrame",
-        Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 0),
-        Position = UDim2.new(0.1, 0, 0, 110),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
-        Visible = false
-    })
-
-    dropdown.MouseButton1Click:Connect(function()
-        dropdownFrame.Visible = not dropdownFrame.Visible
-        dropdownFrame.Size = UDim2.new(0.8, 0, 0, #options * 30)
+    local isDragging = false
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+        end
     end)
 
-    for i, option in ipairs(options) do
-        local optionButton = self:CreateElement("TextButton", {
-            Name = option,
-            Parent = dropdownFrame,
-            Size = UDim2.new(1, 0, 0, 30),
-            Position = UDim2.new(0, 0, 0, (i - 1) * 30),
-            BackgroundColor3 = Color3.fromRGB(70, 70, 70),
-            Text = option,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14,
-            Font = Enum.Font.SourceSans
-        })
+    slider.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+        end
+    end)
 
-        optionButton.MouseButton1Click:Connect(function()
-            dropdown.Text = option
-            dropdownFrame.Visible = false
-        end)
-    end
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local x = math.clamp(input.Position.X - slider.AbsolutePosition.X, 0, slider.AbsoluteSize.X)
+            local value = math.floor(((x / slider.AbsoluteSize.X) * (max - min)) + min)
+            self:Animate(sliderFill, "Size", UDim2.new(x / slider.AbsoluteSize.X, 0, 1, 0), 0.1)
+            sliderText.Text = name .. ": " .. value
+            callback(value)
+        end
+    end)
 
-    return dropdown
+    return slider
 end
 
--- Simple animation (fade in/out)
-function Library:AnimateFade(element, duration, transparency)
-    local startTransparency = element.BackgroundTransparency
-    local step = (transparency - startTransparency) / (duration * 60)
+-- Create a toggle with auto-animation
+function Library:CreateToggle(parent, name, callback)
+    local toggle = self:CreateElement("TextButton", {
+        Name = name,
+        Parent = parent,
+        Size = UDim2.new(0.8, 0, 0, 30),
+        Position = UDim2.new(0.1, 0, 0, 80),
+        BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+        Text = name .. ": Off",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+
+    local toggled = false
+    toggle.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        self:Animate(toggle, "BackgroundColor3", toggled and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(70, 70, 70), 0.2)
+        toggle.Text = name .. ": " .. (toggled and "On" or "Off")
+        callback(toggled)
+    end)
+
+    return toggle
+end
+
+-- Smooth animation function
+function Library:Animate(element, property, targetValue, duration, callback)
+    local startValue = element[property]
+    local step = (targetValue - startValue) / (duration * 60)
 
     for i = 1, duration * 60 do
-        element.BackgroundTransparency = element.BackgroundTransparency + step
+        element[property] = element[property] + step
         wait(1 / 60)
+    end
+
+    if callback then
+        callback()
     end
 end
 
