@@ -27,8 +27,8 @@ function Library:CreateWindow(name)
     local mainFrame = self:CreateElement("Frame", {
         Name = "MainFrame",
         Parent = window,
-        Size = UDim2.new(0, 400, 0, 300),
-        Position = UDim2.new(0.5, -200, 0.5, -150),
+        Size = UDim2.new(0, 450, 0, 350),
+        Position = UDim2.new(0.5, -225, 0.5, -175),
         BackgroundColor3 = Color3.fromRGB(25, 25, 25),
         BackgroundTransparency = 0.1,
         ClipsDescendants = true
