@@ -9,6 +9,14 @@ function Library:CreateElement(type, properties)
     return element
 end
 
+-- Create a gradient color sequence
+function Library:CreateGradient(color1, color2)
+    return ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color1),
+        ColorSequenceKeypoint.new(1, color2)
+    })
+end
+
 -- Create a window (main container)
 function Library:CreateWindow(name)
     local window = self:CreateElement("ScreenGui", {
@@ -21,36 +29,54 @@ function Library:CreateWindow(name)
         Parent = window,
         Size = UDim2.new(0, 400, 0, 300),
         Position = UDim2.new(0.5, -200, 0.5, -150),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+        BackgroundTransparency = 0.1,
         ClipsDescendants = true
+    })
+
+    local uiCorner = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = mainFrame
+    })
+
+    local uiStroke = self:CreateElement("UIStroke", {
+        Thickness = 2,
+        Color = Color3.fromRGB(50, 50, 50),
+        Parent = mainFrame
     })
 
     local title = self:CreateElement("TextLabel", {
         Name = "Title",
         Parent = mainFrame,
-        Size = UDim2.new(1, 0, 0, 30),
+        Size = UDim2.new(1, 0, 0, 40),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        BackgroundTransparency = 0.5,
         Text = name,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 18,
-        Font = Enum.Font.SourceSansBold
+        Font = Enum.Font.GothamBold
+    })
+
+    local uiCornerTitle = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = title
     })
 
     local tabContainer = self:CreateElement("Frame", {
         Name = "TabContainer",
         Parent = mainFrame,
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0, 30),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        Size = UDim2.new(1, 0, 0, 40),
+        Position = UDim2.new(0, 0, 0, 40),
+        BackgroundTransparency = 1
     })
 
     local contentContainer = self:CreateElement("Frame", {
         Name = "ContentContainer",
         Parent = mainFrame,
-        Size = UDim2.new(1, 0, 1, -60),
-        Position = UDim2.new(0, 0, 0, 60),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Size = UDim2.new(1, 0, 1, -80),
+        Position = UDim2.new(0, 0, 0, 80),
+        BackgroundTransparency = 1
     })
 
     return {
@@ -68,11 +94,17 @@ function Library:CreateTab(window, name)
         Parent = window.TabContainer,
         Size = UDim2.new(0.2, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        BackgroundTransparency = 0.5,
         Text = name,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
-        Font = Enum.Font.SourceSans
+        Font = Enum.Font.Gotham
+    })
+
+    local uiCorner = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = tabButton
     })
 
     local tabContent = self:CreateElement("Frame", {
@@ -80,7 +112,7 @@ function Library:CreateTab(window, name)
         Parent = window.ContentContainer,
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        BackgroundTransparency = 1,
         Visible = false
     })
 
@@ -99,18 +131,30 @@ function Library:CreateButton(parent, name, callback)
     local button = self:CreateElement("TextButton", {
         Name = name,
         Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 30),
+        Size = UDim2.new(0.8, 0, 0, 40),
         Position = UDim2.new(0.1, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        BackgroundTransparency = 0.5,
         Text = name,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
-        Font = Enum.Font.SourceSans
+        Font = Enum.Font.Gotham
+    })
+
+    local uiCorner = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = button
+    })
+
+    local uiStroke = self:CreateElement("UIStroke", {
+        Thickness = 1,
+        Color = Color3.fromRGB(100, 100, 100),
+        Parent = button
     })
 
     button.MouseButton1Click:Connect(function()
-        self:Animate(button, "BackgroundColor3", Color3.fromRGB(100, 100, 100), 0.2, function()
-            self:Animate(button, "BackgroundColor3", Color3.fromRGB(70, 70, 70), 0.2)
+        self:Animate(button, "BackgroundTransparency", 0.2, 0.2, function()
+            self:Animate(button, "BackgroundTransparency", 0.5, 0.2)
         end)
         callback()
     end)
@@ -123,9 +167,15 @@ function Library:CreateSlider(parent, name, min, max, callback)
     local slider = self:CreateElement("Frame", {
         Name = name,
         Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 30),
-        Position = UDim2.new(0.1, 0, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        Size = UDim2.new(0.8, 0, 0, 40),
+        Position = UDim2.new(0.1, 0, 0, 50),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        BackgroundTransparency = 0.5
+    })
+
+    local uiCorner = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = slider
     })
 
     local sliderFill = self:CreateElement("Frame", {
@@ -133,6 +183,11 @@ function Library:CreateSlider(parent, name, min, max, callback)
         Parent = slider,
         Size = UDim2.new(0, 0, 1, 0),
         BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    })
+
+    local uiCornerFill = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = sliderFill
     })
 
     local sliderText = self:CreateElement("TextLabel", {
@@ -143,7 +198,7 @@ function Library:CreateSlider(parent, name, min, max, callback)
         Text = name .. ": " .. min,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
-        Font = Enum.Font.SourceSans
+        Font = Enum.Font.Gotham
     })
 
     local isDragging = false
@@ -177,19 +232,31 @@ function Library:CreateToggle(parent, name, callback)
     local toggle = self:CreateElement("TextButton", {
         Name = name,
         Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 30),
-        Position = UDim2.new(0.1, 0, 0, 80),
-        BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+        Size = UDim2.new(0.8, 0, 0, 40),
+        Position = UDim2.new(0.1, 0, 0, 100),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        BackgroundTransparency = 0.5,
         Text = name .. ": Off",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
-        Font = Enum.Font.SourceSans
+        Font = Enum.Font.Gotham
+    })
+
+    local uiCorner = self:CreateElement("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = toggle
+    })
+
+    local uiStroke = self:CreateElement("UIStroke", {
+        Thickness = 1,
+        Color = Color3.fromRGB(100, 100, 100),
+        Parent = toggle
     })
 
     local toggled = false
     toggle.MouseButton1Click:Connect(function()
         toggled = not toggled
-        self:Animate(toggle, "BackgroundColor3", toggled and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(70, 70, 70), 0.2)
+        self:Animate(toggle, "BackgroundTransparency", toggled and 0.2 or 0.5, 0.2)
         toggle.Text = name .. ": " .. (toggled and "On" or "Off")
         callback(toggled)
     end)
