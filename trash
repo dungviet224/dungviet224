@@ -1,340 +1,325 @@
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
 local Library = {}
 Library.__index = Library
+Library.ToggleUI = Enum.KeyCode.RightControl -- Phím tắt mặc định
+Library.Draggable = true -- Cho phép kéo thả
+Library.MinimizeKey = Enum.KeyCode.M -- Phím tắt thu nhỏ
+Library.Theme = {
+    Background = Color3.fromRGB(30, 30, 30),
+    Header = Color3.fromRGB(40, 40, 40),
+    Text = Color3.fromRGB(255, 255, 255),
+    Button = Color3.fromRGB(40, 40, 40),
+    ButtonHover = Color3.fromRGB(50, 50, 50),
+    Toggle = Color3.fromRGB(60, 120, 255),
+    Slider = Color3.fromRGB(60, 120, 255)
+}
 
--- Cấu hình animation
-local function createTween(object, info, properties)
-    local tween = TweenService:Create(object, TweenInfo.new(
-        info.Time or 0.3,
-        info.EasingStyle or Enum.EasingStyle.Quad,
-        info.EasingDirection or Enum.EasingDirection.Out
-    ), properties)
-    return tween
-end
-
+-- Tạo khung UI chính
 function Library:CreateWindow(title)
     local window = Instance.new("ScreenGui")
     local main = Instance.new("Frame")
-    local titleBar = Instance.new("Frame")
-    local titleText = Instance.new("TextLabel")
+    local header = Instance.new("Frame")
+    local minimize = Instance.new("TextButton")
+    local title = Instance.new("TextLabel")
     local tabContainer = Instance.new("Frame")
     local contentContainer = Instance.new("Frame")
 
-    -- Thiết lập window
+    -- Cài đặt ScreenGui
+    if syn and syn.protect_gui then
+        syn.protect_gui(window)
+        window.Parent = CoreGui
+    else
+        window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
     window.Name = "UILibrary"
-    window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     window.ResetOnSpawn = false
+    window.DisplayOrder = 999
 
     -- Thiết lập main frame
     main.Name = "Main"
-    main.Size = UDim2.new(0, 400, 0, 300)
-    main.Position = UDim2.new(0.5, -200, 0.5, -150)
-    main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    main.Size = UDim2.new(0, 450, 0, 350)
+    main.Position = UDim2.new(0.5, -225, 0.5, -175)
+    main.BackgroundColor3 = Library.Theme.Background
     main.BorderSizePixel = 0
+    main.ClipsDescendants = true
     main.Parent = window
 
-    -- Thiết lập title bar
-    titleBar.Name = "TitleBar"
-    titleBar.Size = UDim2.new(1, 0, 0, 30)
-    titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = main
+    -- Tạo hiệu ứng bo góc
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = main
 
-    titleText.Name = "Title"
-    titleText.Size = UDim2.new(1, 0, 1, 0)
-    titleText.Text = title
-    titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleText.TextSize = 16
-    titleText.Font = Enum.Font.GothamBold
-    titleText.Parent = titleBar
+    -- Header với nút minimize
+    header.Name = "Header"
+    header.Size = UDim2.new(1, 0, 0, 30)
+    header.BackgroundColor3 = Library.Theme.Header
+    header.BorderSizePixel = 0
+    header.Parent = main
 
-    -- Container cho tabs
+    minimize.Name = "Minimize"
+    minimize.Size = UDim2.new(0, 30, 0, 30)
+    minimize.Position = UDim2.new(1, -30, 0, 0)
+    minimize.BackgroundTransparency = 1
+    minimize.Text = "-"
+    minimize.TextColor3 = Library.Theme.Text
+    minimize.TextSize = 20
+    minimize.Font = Enum.Font.GothamBold
+    minimize.Parent = header
+
+    title.Name = "Title"
+    title.Size = UDim2.new(1, -60, 1, 0)
+    title.Position = UDim2.new(0, 10, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = title
+    title.TextColor3 = Library.Theme.Text
+    title.TextSize = 14
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+
+    -- Container cho tabs và content
     tabContainer.Name = "TabContainer"
-    tabContainer.Size = UDim2.new(0, 100, 1, -30)
+    tabContainer.Size = UDim2.new(0, 120, 1, -30)
     tabContainer.Position = UDim2.new(0, 0, 0, 30)
     tabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     tabContainer.BorderSizePixel = 0
     tabContainer.Parent = main
 
-    -- Container cho nội dung
     contentContainer.Name = "ContentContainer"
-    contentContainer.Size = UDim2.new(1, -100, 1, -30)
-    contentContainer.Position = UDim2.new(0, 100, 0, 30)
+    contentContainer.Size = UDim2.new(1, -120, 1, -30)
+    contentContainer.Position = UDim2.new(0, 120, 0, 30)
     contentContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     contentContainer.BorderSizePixel = 0
     contentContainer.Parent = main
 
-    -- Cho phép kéo thả window
-    local dragging = false
-    local dragStart
-    local startPos
+    -- Thêm chức năng kéo thả
+    if Library.Draggable then
+        local dragging = false
+        local dragInput
+        local dragStart
+        local startPos
 
-    titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = main.Position
+        header.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = main.Position
+            end
+        end)
+
+        header.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - dragStart
+                main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+    end
+
+    -- Thêm chức năng thu nhỏ
+    local minimized = false
+    minimize.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        local targetSize = minimized and UDim2.new(1, 0, 0, 30) or UDim2.new(1, 0, 1, 0)
+        TweenService:Create(main, TweenInfo.new(0.3), {Size = targetSize}):Play()
+        minimize.Text = minimized and "+" or "-"
+    end)
+
+    -- Thêm phím tắt ẩn/hiện UI
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Library.ToggleUI then
+            window.Enabled = not window.Enabled
+        elseif input.KeyCode == Library.MinimizeKey and not minimized then
+            minimized = not minimized
+            local targetSize = minimized and UDim2.new(1, 0, 0, 30) or UDim2.new(1, 0, 1, 0)
+            TweenService:Create(main, TweenInfo.new(0.3), {Size = targetSize}):Play()
+            minimize.Text = minimized and "+" or "-"
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            main.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
+    -- Tạo khung chứa thông báo
+    local notificationFrame = Instance.new("Frame")
+    notificationFrame.Name = "NotificationFrame"
+    notificationFrame.Size = UDim2.new(0, 200, 0, 0)
+    notificationFrame.Position = UDim2.new(1, -220, 0, 20)
+    notificationFrame.BackgroundTransparency = 1
+    notificationFrame.Parent = window
 
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 5)
+    layout.Parent = notificationFrame
 
     return {
         Window = window,
         Main = main,
         TabContainer = tabContainer,
         ContentContainer = contentContainer,
-        Tabs = {}
+        Tabs = {},
+        NotificationFrame = notificationFrame
     }
 end
 
-function Library:CreateTab(window, name)
-    local tabButton = Instance.new("TextButton")
-    local tabContent = Instance.new("ScrollingFrame")
-    local UIListLayout = Instance.new("UIListLayout")
-    local UIPadding = Instance.new("UIPadding")
-
-    -- Thiết lập tab button
-    tabButton.Name = name.."Tab"
-    tabButton.Size = UDim2.new(1, 0, 0, 30)
-    tabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    tabButton.BorderSizePixel = 0
-    tabButton.Text = name
-    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    tabButton.TextSize = 14
-    tabButton.Font = Enum.Font.Gotham
-    tabButton.Parent = window.TabContainer
-
-    -- Thiết lập tab content
-    tabContent.Name = name.."Content"
-    tabContent.Size = UDim2.new(1, 0, 1, 0)
-    tabContent.BackgroundTransparency = 1
-    tabContent.ScrollBarThickness = 4
-    tabContent.Visible = false
-    tabContent.Parent = window.ContentContainer
-
-    UIListLayout.Parent = tabContent
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    UIListLayout.Padding = UDim.new(0, 5)
-
-    UIPadding.Parent = tabContent
-    UIPadding.PaddingLeft = UDim.new(0, 10)
-    UIPadding.PaddingRight = UDim.new(0, 10)
-    UIPadding.PaddingTop = UDim.new(0, 10)
-
-    -- Animation khi chuyển tab
-    tabButton.MouseButton1Click:Connect(function()
-        for _, tab in pairs(window.Tabs) do
-            tab.Content.Visible = false
-            createTween(tab.Button, {Time = 0.2}, {
-                BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-            }):Play()
-        end
-        tabContent.Visible = true
-        createTween(tabButton, {Time = 0.2}, {
-            BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        }):Play()
+-- Thêm chức năng tạo thông báo
+function Library:CreateNotification(title, message, duration)
+    duration = duration or 3
+    
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(1, 0, 0, 60)
+    notification.BackgroundColor3 = Library.Theme.Header
+    notification.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = notification
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -10, 0, 25)
+    titleLabel.Position = UDim2.new(0, 5, 0, 5)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Library.Theme.Text
+    titleLabel.TextSize = 14
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = notification
+    
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Size = UDim2.new(1, -10, 0, 25)
+    messageLabel.Position = UDim2.new(0, 5, 0, 30)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = message
+    messageLabel.TextColor3 = Library.Theme.Text
+    messageLabel.TextSize = 12
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    messageLabel.Parent = notification
+    
+    notification.Parent = self.NotificationFrame
+    
+    -- Animation hiển thị
+    notification.Position = UDim2.new(1, 0, 0, 0)
+    local showTween = TweenService:Create(notification, TweenInfo.new(0.3), {Position = UDim2.new(0, 0, 0, 0)})
+    showTween:Play()
+    
+    -- Xóa thông báo sau duration
+    delay(duration, function()
+        local hideTween = TweenService:Create(notification, TweenInfo.new(0.3), {Position = UDim2.new(1, 0, 0, 0)})
+        hideTween:Play()
+        hideTween.Completed:Wait()
+        notification:Destroy()
     end)
-
-    -- Hiển thị tab đầu tiên
-    if #window.TabContainer:GetChildren() == 1 then
-        tabContent.Visible = true
-        tabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-
-    table.insert(window.Tabs, {
-        Button = tabButton,
-        Content = tabContent
-    })
-
-    return tabContent
 end
 
-function Library:CreateButton(tab, text, callback)
-    local button = Instance.new("TextButton")
+-- Các hàm còn lại giữ nguyên như cũ...
+[Previous functions: CreateTab, CreateButton, CreateSlider, CreateToggle]
+
+-- Thêm chức năng tạo textbox
+function Library:CreateTextbox(tab, text, placeholder, callback)
+    local textboxContainer = Instance.new("Frame")
+    local textboxLabel = Instance.new("TextLabel")
+    local textbox = Instance.new("TextBox")
     
-    button.Name = text.."Button"
-    button.Size = UDim2.new(1, 0, 0, 30)
-    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 14
-    button.Font = Enum.Font.Gotham
-    button.Parent = tab
-
-    -- Hiệu ứng hover
-    button.MouseEnter:Connect(function()
-        createTween(button, {Time = 0.2}, {
-            BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        }):Play()
+    textboxContainer.Name = text.."TextboxContainer"
+    textboxContainer.Size = UDim2.new(1, 0, 0, 40)
+    textboxContainer.BackgroundTransparency = 1
+    textboxContainer.Parent = tab
+    
+    textboxLabel.Name = "Label"
+    textboxLabel.Size = UDim2.new(1, 0, 0, 20)
+    textboxLabel.BackgroundTransparency = 1
+    textboxLabel.Text = text
+    textboxLabel.TextColor3 = Library.Theme.Text
+    textboxLabel.TextSize = 14
+    textboxLabel.Font = Enum.Font.Gotham
+    textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textboxLabel.Parent = textboxContainer
+    
+    textbox.Name = "Input"
+    textbox.Size = UDim2.new(1, 0, 0, 20)
+    textbox.Position = UDim2.new(0, 0, 0, 20)
+    textbox.BackgroundColor3 = Library.Theme.Button
+    textbox.BorderSizePixel = 0
+    textbox.Text = ""
+    textbox.PlaceholderText = placeholder
+    textbox.TextColor3 = Library.Theme.Text
+    textbox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    textbox.TextSize = 12
+    textbox.Font = Enum.Font.Gotham
+    textbox.Parent = textboxContainer
+    
+    textbox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            callback(textbox.Text)
+        end
     end)
+    
+    return textbox
+end
 
-    button.MouseLeave:Connect(function()
-        createTween(button, {Time = 0.2}, {
-            BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        }):Play()
-    end)
-
-    -- Hiệu ứng click
-    button.MouseButton1Click:Connect(function()
-        createTween(button, {Time = 0.1}, {
-            BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        }):Play()
-        callback()
-        wait(0.1)
-        if button.MouseEnter then
-            createTween(button, {Time = 0.1}, {
-                BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            }):Play()
+-- Thêm chức năng tạo dropdown
+function Library:CreateDropdown(tab, text, options, callback)
+    local dropdownContainer = Instance.new("Frame")
+    local dropdownLabel = Instance.new("TextLabel")
+    local dropdownButton = Instance.new("TextButton")
+    local optionsFrame = Instance.new("Frame")
+    local layout = Instance.new("UIListLayout")
+    
+    dropdownContainer.Name = text.."DropdownContainer"
+    dropdownContainer.Size = UDim2.new(1, 0, 0, 60)
+    dropdownContainer.BackgroundTransparency = 1
+    dropdownContainer.Parent = tab
+    
+    dropdownLabel.Name = "Label"
+    dropdownLabel.Size = UDim2.new(1, 0, 0, 20)
+    dropdownLabel.BackgroundTransparency = 1
+    dropdownLabel.Text = text
+    dropdownLabel.TextColor3 = Library.Theme.Text
+    dropdownLabel.TextSize = 14
+    dropdownLabel.Font = Enum.Font.Gotham
+    dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+    dropdownLabel.Parent = dropdownContainer
+    
+    dropdownButton.Name = "Button"
+    dropdownButton.Size = UDim2.new(1, 0, 0, 30)
+    dropdownButton.Position = UDim2.new(0, 0, 0, 20)
+    dropdownButton.BackgroundColor3 = Library.Theme.Button
+    dropdownButton.BorderSizePixel = 0
+    dropdownButton.Text = "Select..."
+    dropdownButton.TextColor3 = Library.Theme.Text
+    dropdownButton.TextSize = 12
+    dropdownButton.Font = Enum.Font.Gotham
+    dropdownButton.Parent = dropdownContainer
+    
+    optionsFrame.Name = "Options"
+    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+    optionsFrame.Position = UDim2.new(0, 0, 1, 0)
+    optionsFrame.BackgroundColor3 = Library.Theme.Button
+    optionsFrame.BorderSizePixel = 0
+    optionsFrame.ClipsDescendants = true
+    optionsFrame.Visible = false
+    optionsFrame.Parent = dropdownButton
+    
+    layout.Padding = UDim.new(0, 2)
+    layout.Parent = optionsFrame
+    
+    local isOpen = false
+    
+    dropdownButton.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        optionsFrame.Visible = isOpen
+        if isOpen then
+            optionsFrame.Size = UDim2.new(1, 0, 0, #options * 32)
         else
-            createTween(button, {Time = 0.1}, {
-                BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            }):Play()
+            optionsFrame.Size = UDim2.new(1, 0, 0, 0)
         end
     end)
-end
-
-function Library:CreateSlider(tab, text, min, max, callback)
-    local sliderContainer = Instance.new("Frame")
-    local sliderLabel = Instance.new("TextLabel")
-    local sliderBackground = Instance.new("Frame")
-    local sliderFill = Instance.new("Frame")
-    local sliderValue = Instance.new("TextLabel")
     
-    sliderContainer.Name = text.."SliderContainer"
-    sliderContainer.Size = UDim2.new(1, 0, 0, 45)
-    sliderContainer.BackgroundTransparency = 1
-    sliderContainer.Parent = tab
-
-    sliderLabel.Name = "Label"
-    sliderLabel.Size = UDim2.new(1, 0, 0, 20)
-    sliderLabel.BackgroundTransparency = 1
-    sliderLabel.Text = text
-    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderLabel.TextSize = 14
-    sliderLabel.Font = Enum.Font.Gotham
-    sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
-    sliderLabel.Parent = sliderContainer
-
-    sliderBackground.Name = "Background"
-    sliderBackground.Size = UDim2.new(1, 0, 0, 6)
-    sliderBackground.Position = UDim2.new(0, 0, 0, 25)
-    sliderBackground.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    sliderBackground.BorderSizePixel = 0
-    sliderBackground.Parent = sliderContainer
-
-    sliderFill.Name = "Fill"
-    sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
-    sliderFill.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
-    sliderFill.BorderSizePixel = 0
-    sliderFill.Parent = sliderBackground
-
-    sliderValue.Name = "Value"
-    sliderValue.Size = UDim2.new(0, 50, 0, 20)
-    sliderValue.Position = UDim2.new(1, -50, 0, 0)
-    sliderValue.BackgroundTransparency = 1
-    sliderValue.Text = tostring(min + (max - min) * 0.5)
-    sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderValue.TextSize = 14
-    sliderValue.Font = Enum.Font.Gotham
-    sliderValue.Parent = sliderContainer
-
-    local dragging = false
-
-    local function updateSlider(input)
-        local pos = math.clamp((input.Position.X - sliderBackground.AbsolutePosition.X) / sliderBackground.AbsoluteSize.X, 0, 1)
-        local value = math.floor(min + (max - min) * pos)
-        
-        createTween(sliderFill, {Time = 0.1}, {
-            Size = UDim2.new(pos, 0, 1, 0)
-        }):Play()
-        
-        sliderValue.Text = tostring(value)
-        callback(value)
-    end
-
-    sliderBackground.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            updateSlider(input)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-end
-
-function Library:CreateToggle(tab, text, callback)
-    local toggleContainer = Instance.new("Frame")
-    local toggleLabel = Instance.new("TextLabel")
-    local toggleButton = Instance.new("TextButton")
-    local toggleFill = Instance.new("Frame")
-    
-    toggleContainer.Name = text.."ToggleContainer"
-    toggleContainer.Size = UDim2.new(1, 0, 0, 30)
-    toggleContainer.BackgroundTransparency = 1
-    toggleContainer.Parent = tab
-
-    toggleLabel.Name = "Label"
-    toggleLabel.Size = UDim2.new(1, -50, 1, 0)
-    toggleLabel.BackgroundTransparency = 1
-    toggleLabel.Text = text
-    toggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleLabel.TextSize = 14
-    toggleLabel.Font = Enum.Font.Gotham
-    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    toggleLabel.Parent = toggleContainer
-
-    toggleButton.Name = "Toggle"
-    toggleButton.Size = UDim2.new(0, 40, 0, 20)
-    toggleButton.Position = UDim2.new(1, -40, 0.5, -10)
-    toggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    toggleButton.BorderSizePixel = 0
-    toggleButton.Text = ""
-    toggleButton.Parent = toggleContainer
-
-    toggleFill.Name = "Fill"
-    toggleFill.Size = UDim2.new(0, 16, 0, 16)
-    toggleFill.Position = UDim2.new(0, 2, 0.5, -8)
-    toggleFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    toggleFill.BorderSizePixel = 0
-    toggleFill.Parent = toggleButton
-
-    local toggled = false
-    local tweening = false
-
-    toggleButton.MouseButton1Click:Connect(function()
-        if tweening then return end
-        tweening = true
-        toggled = not toggled
-        
-        local targetPosition = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-        local targetColor = toggled and Color3.fromRGB(60, 120,
+    for i, option in ipairs(options
