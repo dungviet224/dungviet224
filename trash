@@ -1,282 +1,340 @@
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
 local Library = {}
+Library.__index = Library
 
--- Utility function to create UI elements
-function Library:CreateElement(type, properties)
-    local element = Instance.new(type)
-    for property, value in pairs(properties) do
-        element[property] = value
-    end
-    return element
+-- Cấu hình animation
+local function createTween(object, info, properties)
+    local tween = TweenService:Create(object, TweenInfo.new(
+        info.Time or 0.3,
+        info.EasingStyle or Enum.EasingStyle.Quad,
+        info.EasingDirection or Enum.EasingDirection.Out
+    ), properties)
+    return tween
 end
 
--- Create a gradient color sequence
-function Library:CreateGradient(color1, color2)
-    return ColorSequence.new({
-        ColorSequenceKeypoint.new(0, color1),
-        ColorSequenceKeypoint.new(1, color2)
-    })
-end
+function Library:CreateWindow(title)
+    local window = Instance.new("ScreenGui")
+    local main = Instance.new("Frame")
+    local titleBar = Instance.new("Frame")
+    local titleText = Instance.new("TextLabel")
+    local tabContainer = Instance.new("Frame")
+    local contentContainer = Instance.new("Frame")
 
--- Create a window (main container)
-function Library:CreateWindow(name)
-    local window = self:CreateElement("ScreenGui", {
-        Name = name,
-        Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    })
+    -- Thiết lập window
+    window.Name = "UILibrary"
+    window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    window.ResetOnSpawn = false
 
-    local mainFrame = self:CreateElement("Frame", {
-        Name = "MainFrame",
-        Parent = window,
-        Size = UDim2.new(0, 450, 0, 350),
-        Position = UDim2.new(0.5, -225, 0.5, -175),
-        BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-        BackgroundTransparency = 0.1,
-        ClipsDescendants = true
-    })
+    -- Thiết lập main frame
+    main.Name = "Main"
+    main.Size = UDim2.new(0, 400, 0, 300)
+    main.Position = UDim2.new(0.5, -200, 0.5, -150)
+    main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    main.BorderSizePixel = 0
+    main.Parent = window
 
-    local uiCorner = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = mainFrame
-    })
+    -- Thiết lập title bar
+    titleBar.Name = "TitleBar"
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    titleBar.BorderSizePixel = 0
+    titleBar.Parent = main
 
-    local uiStroke = self:CreateElement("UIStroke", {
-        Thickness = 2,
-        Color = Color3.fromRGB(50, 50, 50),
-        Parent = mainFrame
-    })
+    titleText.Name = "Title"
+    titleText.Size = UDim2.new(1, 0, 1, 0)
+    titleText.Text = title
+    titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleText.TextSize = 16
+    titleText.Font = Enum.Font.GothamBold
+    titleText.Parent = titleBar
 
-    local title = self:CreateElement("TextLabel", {
-        Name = "Title",
-        Parent = mainFrame,
-        Size = UDim2.new(1, 0, 0, 40),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-        BackgroundTransparency = 0.5,
-        Text = name,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 18,
-        Font = Enum.Font.GothamBold
-    })
+    -- Container cho tabs
+    tabContainer.Name = "TabContainer"
+    tabContainer.Size = UDim2.new(0, 100, 1, -30)
+    tabContainer.Position = UDim2.new(0, 0, 0, 30)
+    tabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    tabContainer.BorderSizePixel = 0
+    tabContainer.Parent = main
 
-    local uiCornerTitle = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = title
-    })
+    -- Container cho nội dung
+    contentContainer.Name = "ContentContainer"
+    contentContainer.Size = UDim2.new(1, -100, 1, -30)
+    contentContainer.Position = UDim2.new(0, 100, 0, 30)
+    contentContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    contentContainer.BorderSizePixel = 0
+    contentContainer.Parent = main
 
-    local tabContainer = self:CreateElement("Frame", {
-        Name = "TabContainer",
-        Parent = mainFrame,
-        Size = UDim2.new(1, 0, 0, 40),
-        Position = UDim2.new(0, 0, 0, 40),
-        BackgroundTransparency = 1
-    })
+    -- Cho phép kéo thả window
+    local dragging = false
+    local dragStart
+    local startPos
 
-    local contentContainer = self:CreateElement("Frame", {
-        Name = "ContentContainer",
-        Parent = mainFrame,
-        Size = UDim2.new(1, 0, 1, -80),
-        Position = UDim2.new(0, 0, 0, 80),
-        BackgroundTransparency = 1
-    })
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = main.Position
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
 
     return {
         Window = window,
-        MainFrame = mainFrame,
+        Main = main,
         TabContainer = tabContainer,
-        ContentContainer = contentContainer
+        ContentContainer = contentContainer,
+        Tabs = {}
     }
 end
 
--- Create a horizontal tab
 function Library:CreateTab(window, name)
-    local tabButton = self:CreateElement("TextButton", {
-        Name = name,
-        Parent = window.TabContainer,
-        Size = UDim2.new(0.2, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-        BackgroundTransparency = 0.5,
-        Text = name,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        Font = Enum.Font.Gotham
-    })
+    local tabButton = Instance.new("TextButton")
+    local tabContent = Instance.new("ScrollingFrame")
+    local UIListLayout = Instance.new("UIListLayout")
+    local UIPadding = Instance.new("UIPadding")
 
-    local uiCorner = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = tabButton
-    })
+    -- Thiết lập tab button
+    tabButton.Name = name.."Tab"
+    tabButton.Size = UDim2.new(1, 0, 0, 30)
+    tabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    tabButton.BorderSizePixel = 0
+    tabButton.Text = name
+    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabButton.TextSize = 14
+    tabButton.Font = Enum.Font.Gotham
+    tabButton.Parent = window.TabContainer
 
-    local tabContent = self:CreateElement("Frame", {
-        Name = name .. "Content",
-        Parent = window.ContentContainer,
-        Size = UDim2.new(1, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        Visible = false
-    })
+    -- Thiết lập tab content
+    tabContent.Name = name.."Content"
+    tabContent.Size = UDim2.new(1, 0, 1, 0)
+    tabContent.BackgroundTransparency = 1
+    tabContent.ScrollBarThickness = 4
+    tabContent.Visible = false
+    tabContent.Parent = window.ContentContainer
 
+    UIListLayout.Parent = tabContent
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 5)
+
+    UIPadding.Parent = tabContent
+    UIPadding.PaddingLeft = UDim.new(0, 10)
+    UIPadding.PaddingRight = UDim.new(0, 10)
+    UIPadding.PaddingTop = UDim.new(0, 10)
+
+    -- Animation khi chuyển tab
     tabButton.MouseButton1Click:Connect(function()
-        for _, child in ipairs(window.ContentContainer:GetChildren()) do
-            child.Visible = false
+        for _, tab in pairs(window.Tabs) do
+            tab.Content.Visible = false
+            createTween(tab.Button, {Time = 0.2}, {
+                BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            }):Play()
         end
         tabContent.Visible = true
+        createTween(tabButton, {Time = 0.2}, {
+            BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        }):Play()
     end)
+
+    -- Hiển thị tab đầu tiên
+    if #window.TabContainer:GetChildren() == 1 then
+        tabContent.Visible = true
+        tabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+
+    table.insert(window.Tabs, {
+        Button = tabButton,
+        Content = tabContent
+    })
 
     return tabContent
 end
 
--- Create a button with auto-animation
-function Library:CreateButton(parent, name, callback)
-    local button = self:CreateElement("TextButton", {
-        Name = name,
-        Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 40),
-        Position = UDim2.new(0.1, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-        BackgroundTransparency = 0.5,
-        Text = name,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        Font = Enum.Font.Gotham
-    })
+function Library:CreateButton(tab, text, callback)
+    local button = Instance.new("TextButton")
+    
+    button.Name = text.."Button"
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    button.BorderSizePixel = 0
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 14
+    button.Font = Enum.Font.Gotham
+    button.Parent = tab
 
-    local uiCorner = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = button
-    })
+    -- Hiệu ứng hover
+    button.MouseEnter:Connect(function()
+        createTween(button, {Time = 0.2}, {
+            BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        }):Play()
+    end)
 
-    local uiStroke = self:CreateElement("UIStroke", {
-        Thickness = 1,
-        Color = Color3.fromRGB(100, 100, 100),
-        Parent = button
-    })
+    button.MouseLeave:Connect(function()
+        createTween(button, {Time = 0.2}, {
+            BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        }):Play()
+    end)
 
+    -- Hiệu ứng click
     button.MouseButton1Click:Connect(function()
-        self:Animate(button, "BackgroundTransparency", 0.2, 0.2, function()
-            self:Animate(button, "BackgroundTransparency", 0.5, 0.2)
-        end)
+        createTween(button, {Time = 0.1}, {
+            BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        }):Play()
         callback()
+        wait(0.1)
+        if button.MouseEnter then
+            createTween(button, {Time = 0.1}, {
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            }):Play()
+        else
+            createTween(button, {Time = 0.1}, {
+                BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            }):Play()
+        end
     end)
-
-    return button
 end
 
--- Create a slider with auto-animation
-function Library:CreateSlider(parent, name, min, max, callback)
-    local slider = self:CreateElement("Frame", {
-        Name = name,
-        Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 40),
-        Position = UDim2.new(0.1, 0, 0, 50),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-        BackgroundTransparency = 0.5
-    })
+function Library:CreateSlider(tab, text, min, max, callback)
+    local sliderContainer = Instance.new("Frame")
+    local sliderLabel = Instance.new("TextLabel")
+    local sliderBackground = Instance.new("Frame")
+    local sliderFill = Instance.new("Frame")
+    local sliderValue = Instance.new("TextLabel")
+    
+    sliderContainer.Name = text.."SliderContainer"
+    sliderContainer.Size = UDim2.new(1, 0, 0, 45)
+    sliderContainer.BackgroundTransparency = 1
+    sliderContainer.Parent = tab
 
-    local uiCorner = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = slider
-    })
+    sliderLabel.Name = "Label"
+    sliderLabel.Size = UDim2.new(1, 0, 0, 20)
+    sliderLabel.BackgroundTransparency = 1
+    sliderLabel.Text = text
+    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderLabel.TextSize = 14
+    sliderLabel.Font = Enum.Font.Gotham
+    sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+    sliderLabel.Parent = sliderContainer
 
-    local sliderFill = self:CreateElement("Frame", {
-        Name = "SliderFill",
-        Parent = slider,
-        Size = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    })
+    sliderBackground.Name = "Background"
+    sliderBackground.Size = UDim2.new(1, 0, 0, 6)
+    sliderBackground.Position = UDim2.new(0, 0, 0, 25)
+    sliderBackground.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    sliderBackground.BorderSizePixel = 0
+    sliderBackground.Parent = sliderContainer
 
-    local uiCornerFill = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = sliderFill
-    })
+    sliderFill.Name = "Fill"
+    sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
+    sliderFill.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Parent = sliderBackground
 
-    local sliderText = self:CreateElement("TextLabel", {
-        Name = "SliderText",
-        Parent = slider,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = name .. ": " .. min,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        Font = Enum.Font.Gotham
-    })
+    sliderValue.Name = "Value"
+    sliderValue.Size = UDim2.new(0, 50, 0, 20)
+    sliderValue.Position = UDim2.new(1, -50, 0, 0)
+    sliderValue.BackgroundTransparency = 1
+    sliderValue.Text = tostring(min + (max - min) * 0.5)
+    sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderValue.TextSize = 14
+    sliderValue.Font = Enum.Font.Gotham
+    sliderValue.Parent = sliderContainer
 
-    local isDragging = false
-    slider.InputBegan:Connect(function(input)
+    local dragging = false
+
+    local function updateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBackground.AbsolutePosition.X) / sliderBackground.AbsoluteSize.X, 0, 1)
+        local value = math.floor(min + (max - min) * pos)
+        
+        createTween(sliderFill, {Time = 0.1}, {
+            Size = UDim2.new(pos, 0, 1, 0)
+        }):Play()
+        
+        sliderValue.Text = tostring(value)
+        callback(value)
+    end
+
+    sliderBackground.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isDragging = true
+            dragging = true
+            updateSlider(input)
         end
     end)
 
-    slider.InputEnded:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSlider(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isDragging = false
+            dragging = false
         end
     end)
-
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local x = math.clamp(input.Position.X - slider.AbsolutePosition.X, 0, slider.AbsoluteSize.X)
-            local value = math.floor(((x / slider.AbsoluteSize.X) * (max - min)) + min)
-            self:Animate(sliderFill, "Size", UDim2.new(x / slider.AbsoluteSize.X, 0, 1, 0), 0.1)
-            sliderText.Text = name .. ": " .. value
-            callback(value)
-        end
-    end)
-
-    return slider
 end
 
--- Create a toggle with auto-animation
-function Library:CreateToggle(parent, name, callback)
-    local toggle = self:CreateElement("TextButton", {
-        Name = name,
-        Parent = parent,
-        Size = UDim2.new(0.8, 0, 0, 40),
-        Position = UDim2.new(0.1, 0, 0, 100),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-        BackgroundTransparency = 0.5,
-        Text = name .. ": Off",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        Font = Enum.Font.Gotham
-    })
+function Library:CreateToggle(tab, text, callback)
+    local toggleContainer = Instance.new("Frame")
+    local toggleLabel = Instance.new("TextLabel")
+    local toggleButton = Instance.new("TextButton")
+    local toggleFill = Instance.new("Frame")
+    
+    toggleContainer.Name = text.."ToggleContainer"
+    toggleContainer.Size = UDim2.new(1, 0, 0, 30)
+    toggleContainer.BackgroundTransparency = 1
+    toggleContainer.Parent = tab
 
-    local uiCorner = self:CreateElement("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = toggle
-    })
+    toggleLabel.Name = "Label"
+    toggleLabel.Size = UDim2.new(1, -50, 1, 0)
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = text
+    toggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleLabel.TextSize = 14
+    toggleLabel.Font = Enum.Font.Gotham
+    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    toggleLabel.Parent = toggleContainer
 
-    local uiStroke = self:CreateElement("UIStroke", {
-        Thickness = 1,
-        Color = Color3.fromRGB(100, 100, 100),
-        Parent = toggle
-    })
+    toggleButton.Name = "Toggle"
+    toggleButton.Size = UDim2.new(0, 40, 0, 20)
+    toggleButton.Position = UDim2.new(1, -40, 0.5, -10)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggleButton.BorderSizePixel = 0
+    toggleButton.Text = ""
+    toggleButton.Parent = toggleContainer
+
+    toggleFill.Name = "Fill"
+    toggleFill.Size = UDim2.new(0, 16, 0, 16)
+    toggleFill.Position = UDim2.new(0, 2, 0.5, -8)
+    toggleFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    toggleFill.BorderSizePixel = 0
+    toggleFill.Parent = toggleButton
 
     local toggled = false
-    toggle.MouseButton1Click:Connect(function()
+    local tweening = false
+
+    toggleButton.MouseButton1Click:Connect(function()
+        if tweening then return end
+        tweening = true
         toggled = not toggled
-        self:Animate(toggle, "BackgroundTransparency", toggled and 0.2 or 0.5, 0.2)
-        toggle.Text = name .. ": " .. (toggled and "On" or "Off")
-        callback(toggled)
-    end)
-
-    return toggle
-end
-
--- Smooth animation function
-function Library:Animate(element, property, targetValue, duration, callback)
-    local startValue = element[property]
-    local step = (targetValue - startValue) / (duration * 60)
-
-    for i = 1, duration * 60 do
-        element[property] = element[property] + step
-        wait(1 / 60)
-    end
-
-    if callback then
-        callback()
-    end
-end
-
-return Library
+        
+        local targetPosition = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        local targetColor = toggled and Color3.fromRGB(60, 120,
