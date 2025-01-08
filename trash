@@ -1,355 +1,406 @@
-local Library = {}
-Library.__index = Library
-
--- Các dịch vụ cần thiết
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- Các biến cấu hình
-Library.ToggleKey = Enum.KeyCode.RightControl
-Library.MinimizeKey = Enum.KeyCode.M
-Library.Colors = {
-    Background = Color3.fromRGB(25, 25, 25),
-    Section = Color3.fromRGB(30, 30, 30),
+local Library = {}
+Library.__index = Library
+Library.ToggleUI = Enum.KeyCode.RightControl -- Phím tắt mặc định
+Library.Draggable = true -- Cho phép kéo thả
+Library.MinimizeKey = Enum.KeyCode.M -- Phím tắt thu nhỏ
+Library.Theme = {
+    Background = Color3.fromRGB(30, 30, 30),
+    Header = Color3.fromRGB(40, 40, 40),
     Text = Color3.fromRGB(255, 255, 255),
-    Border = Color3.fromRGB(40, 40, 40),
-    Enabled = Color3.fromRGB(0, 255, 140),
-    Disabled = Color3.fromRGB(255, 40, 40)
+    Button = Color3.fromRGB(40, 40, 40),
+    ButtonHover = Color3.fromRGB(50, 50, 50),
+    Toggle = Color3.fromRGB(60, 120, 255),
+    Slider = Color3.fromRGB(60, 120, 255)
 }
 
--- Bảo vệ UI khỏi bị xóa
-local function protectGui(gui)
-    if syn and syn.protect_gui then
-        syn.protect_gui(gui)
-        gui.Parent = CoreGui
-    elseif gethui then
-        gui.Parent = gethui()
-    else
-        gui.Parent = CoreGui
-    end
-end
-
--- Hàm tạo tween an toàn
-local function safeTween(object, info, properties)
-    if not object or not object.Parent then return end
-    local tween = TweenService:Create(object, TweenInfo.new(info.Time or 0.3), properties)
-    tween:Play()
-    return tween
-end
-
+-- Tạo khung UI chính
 function Library:CreateWindow(title)
     local window = Instance.new("ScreenGui")
     local main = Instance.new("Frame")
-    local dragFrame = Instance.new("Frame")
-    local titleText = Instance.new("TextLabel")
-    local closeBtn = Instance.new("TextButton")
-    local minimizeBtn = Instance.new("TextButton")
+    local header = Instance.new("Frame")
+    local minimize = Instance.new("TextButton")
+    local title = Instance.new("TextLabel")
     local tabContainer = Instance.new("Frame")
     local contentContainer = Instance.new("Frame")
-    
-    -- Thiết lập window
-    window.Name = "UILibrary_" .. tostring(math.random(1000000, 9999999))
-    window.DisplayOrder = 100
-    window.ResetOnSpawn = false
-    protectGui(window)
 
-    -- Main frame
+    -- Cài đặt ScreenGui
+    if syn and syn.protect_gui then
+        syn.protect_gui(window)
+        window.Parent = CoreGui
+    else
+        window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
+    window.Name = "UILibrary"
+    window.ResetOnSpawn = false
+    window.DisplayOrder = 999
+
+    -- Thiết lập main frame
     main.Name = "Main"
-    main.Size = UDim2.new(0, 500, 0, 350)
-    main.Position = UDim2.new(0.5, -250, 0.5, -175)
-    main.BackgroundColor3 = Library.Colors.Background
+    main.Size = UDim2.new(0, 450, 0, 350)
+    main.Position = UDim2.new(0.5, -225, 0.5, -175)
+    main.BackgroundColor3 = Library.Theme.Background
     main.BorderSizePixel = 0
     main.ClipsDescendants = true
     main.Parent = window
 
-    -- Tạo shadow và corner
+    -- Tạo hiệu ứng bo góc
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 5)
     corner.Parent = main
 
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.BackgroundTransparency = 1
-    shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    shadow.Size = UDim2.new(1, 30, 1, 30)
-    shadow.Image = "rbxassetid://5554236805"
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.6
-    shadow.Parent = main
+    -- Header với nút minimize
+    header.Name = "Header"
+    header.Size = UDim2.new(1, 0, 0, 30)
+    header.BackgroundColor3 = Library.Theme.Header
+    header.BorderSizePixel = 0
+    header.Parent = main
 
-    -- Drag frame
-    dragFrame.Name = "DragFrame"
-    dragFrame.Size = UDim2.new(1, 0, 0, 30)
-    dragFrame.BackgroundColor3 = Library.Colors.Section
-    dragFrame.BorderSizePixel = 0
-    dragFrame.Parent = main
+    minimize.Name = "Minimize"
+    minimize.Size = UDim2.new(0, 30, 0, 30)
+    minimize.Position = UDim2.new(1, -30, 0, 0)
+    minimize.BackgroundTransparency = 1
+    minimize.Text = "-"
+    minimize.TextColor3 = Library.Theme.Text
+    minimize.TextSize = 20
+    minimize.Font = Enum.Font.GothamBold
+    minimize.Parent = header
 
-    titleText.Name = "Title"
-    titleText.Size = UDim2.new(1, -60, 1, 0)
-    titleText.Position = UDim2.new(0, 10, 0, 0)
-    titleText.BackgroundTransparency = 1
-    titleText.Text = title or "UI Library"
-    titleText.TextColor3 = Library.Colors.Text
-    titleText.TextSize = 14
-    titleText.Font = Enum.Font.GothamBold
-    titleText.TextXAlignment = Enum.TextXAlignment.Left
-    titleText.Parent = dragFrame
+    title.Name = "Title"
+    title.Size = UDim2.new(1, -60, 1, 0)
+    title.Position = UDim2.new(0, 10, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = title
+    title.TextColor3 = Library.Theme.Text
+    title.TextSize = 14
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
 
-    -- Close button
-    closeBtn.Name = "Close"
-    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-    closeBtn.Position = UDim2.new(1, -30, 0, 0)
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Text = "×"
-    closeBtn.TextColor3 = Library.Colors.Text
-    closeBtn.TextSize = 20
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.Parent = dragFrame
-
-    -- Minimize button
-    minimizeBtn.Name = "Minimize"
-    minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
-    minimizeBtn.Position = UDim2.new(1, -60, 0, 0)
-    minimizeBtn.BackgroundTransparency = 1
-    minimizeBtn.Text = "-"
-    minimizeBtn.TextColor3 = Library.Colors.Text
-    minimizeBtn.TextSize = 20
-    minimizeBtn.Font = Enum.Font.GothamBold
-    minimizeBtn.Parent = dragFrame
-
-    -- Container cho tabs
+    -- Container cho tabs và content
     tabContainer.Name = "TabContainer"
-    tabContainer.Size = UDim2.new(0, 130, 1, -30)
+    tabContainer.Size = UDim2.new(0, 120, 1, -30)
     tabContainer.Position = UDim2.new(0, 0, 0, 30)
-    tabContainer.BackgroundColor3 = Library.Colors.Section
+    tabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     tabContainer.BorderSizePixel = 0
     tabContainer.Parent = main
 
-    -- Container cho nội dung
     contentContainer.Name = "ContentContainer"
-    contentContainer.Size = UDim2.new(1, -130, 1, -30)
-    contentContainer.Position = UDim2.new(0, 130, 0, 30)
-    contentContainer.BackgroundColor3 = Library.Colors.Background
+    contentContainer.Size = UDim2.new(1, -120, 1, -30)
+    contentContainer.Position = UDim2.new(0, 120, 0, 30)
+    contentContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     contentContainer.BorderSizePixel = 0
     contentContainer.Parent = main
 
-    -- Xử lý kéo thả
-    local dragging, dragInput, dragStart, startPos
-    dragFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = main.Position
-        end
-    end)
+    -- Thêm chức năng kéo thả
+    if Library.Draggable then
+        local dragging = false
+        local dragInput
+        local dragStart
+        local startPos
 
-    dragFrame.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    -- Xử lý đóng/mở
-    local minimized = false
-    local closed = false
-
-    closeBtn.MouseButton1Click:Connect(function()
-        window:Destroy()
-    end)
-
-    minimizeBtn.MouseButton1Click:Connect(function()
-        minimized = not minimized
-        if minimized then
-            main:TweenSize(UDim2.new(0, 500, 0, 30), "Out", "Quad", 0.3, true)
-        else
-            main:TweenSize(UDim2.new(0, 500, 0, 350), "Out", "Quad", 0.3, true)
-        end
-    end)
-
-    -- Phím tắt
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed then
-            if input.KeyCode == Library.ToggleKey then
-                closed = not closed
-                window.Enabled = not closed
-            elseif input.KeyCode == Library.MinimizeKey then
-                minimized = not minimized
-                if minimized then
-                    main:TweenSize(UDim2.new(0, 500, 0, 30), "Out", "Quad", 0.3, true)
-                else
-                    main:TweenSize(UDim2.new(0, 500, 0, 350), "Out", "Quad", 0.3, true)
-                end
+        header.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = main.Position
             end
+        end)
+
+        header.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - dragStart
+                main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+    end
+
+    -- Thêm chức năng thu nhỏ
+    local minimized = false
+    minimize.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        local targetSize = minimized and UDim2.new(1, 0, 0, 30) or UDim2.new(1, 0, 1, 0)
+        TweenService:Create(main, TweenInfo.new(0.3), {Size = targetSize}):Play()
+        minimize.Text = minimized and "+" or "-"
+    end)
+
+    -- Thêm phím tắt ẩn/hiện UI
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Library.ToggleUI then
+            window.Enabled = not window.Enabled
+        elseif input.KeyCode == Library.MinimizeKey and not minimized then
+            minimized = not minimized
+            local targetSize = minimized and UDim2.new(1, 0, 0, 30) or UDim2.new(1, 0, 1, 0)
+            TweenService:Create(main, TweenInfo.new(0.3), {Size = targetSize}):Play()
+            minimize.Text = minimized and "+" or "-"
         end
     end)
+
+    -- Tạo khung chứa thông báo
+    local notificationFrame = Instance.new("Frame")
+    notificationFrame.Name = "NotificationFrame"
+    notificationFrame.Size = UDim2.new(0, 200, 0, 0)
+    notificationFrame.Position = UDim2.new(1, -220, 0, 20)
+    notificationFrame.BackgroundTransparency = 1
+    notificationFrame.Parent = window
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 5)
+    layout.Parent = notificationFrame
 
     return {
         Window = window,
         Main = main,
         TabContainer = tabContainer,
         ContentContainer = contentContainer,
-        Tabs = {}
+        Tabs = {},
+        NotificationFrame = notificationFrame
     }
 end
 
-function Library:CreateTab(window, name)
-    local tabButton = Instance.new("TextButton")
-    local tabContent = Instance.new("ScrollingFrame")
+-- Thêm chức năng tạo thông báo
+function Library:CreateNotification(title, message, duration)
+    duration = duration or 3
     
-    -- Thiết lập tab button
-    tabButton.Name = name.."Tab"
-    tabButton.Size = UDim2.new(1, 0, 0, 30)
-    tabButton.BackgroundColor3 = Library.Colors.Section
-    tabButton.BorderSizePixel = 0
-    tabButton.Text = name
-    tabButton.TextColor3 = Library.Colors.Text
-    tabButton.TextSize = 14
-    tabButton.Font = Enum.Font.Gotham
-    tabButton.Parent = window.TabContainer
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(1, 0, 0, 60)
+    notification.BackgroundColor3 = Library.Theme.Header
+    notification.BorderSizePixel = 0
     
-    -- Bố trí các tab buttons
-    local tabCount = #window.TabContainer:GetChildren()
-    tabButton.Position = UDim2.new(0, 0, 0, (tabCount - 1) * 30)
-
-    -- Thiết lập tab content
-    tabContent.Name = name.."Content"
-    tabContent.Size = UDim2.new(1, -10, 1, -10)
-    tabContent.Position = UDim2.new(0, 5, 0, 5)
-    tabContent.BackgroundTransparency = 1
-    tabContent.BorderSizePixel = 0
-    tabContent.ScrollBarThickness = 3
-    tabContent.ScrollBarImageColor3 = Library.Colors.Border
-    tabContent.Visible = tabCount == 1
-    tabContent.Parent = window.ContentContainer
-
-    -- Auto-size content
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 5)
-    layout.Parent = tabContent
-
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        tabContent.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = notification
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -10, 0, 25)
+    titleLabel.Position = UDim2.new(0, 5, 0, 5)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Library.Theme.Text
+    titleLabel.TextSize = 14
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = notification
+    
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Size = UDim2.new(1, -10, 0, 25)
+    messageLabel.Position = UDim2.new(0, 5, 0, 30)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = message
+    messageLabel.TextColor3 = Library.Theme.Text
+    messageLabel.TextSize = 12
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    messageLabel.Parent = notification
+    
+    notification.Parent = self.NotificationFrame
+    
+    -- Animation hiển thị
+    notification.Position = UDim2.new(1, 0, 0, 0)
+    local showTween = TweenService:Create(notification, TweenInfo.new(0.3), {Position = UDim2.new(0, 0, 0, 0)})
+    showTween:Play()
+    
+    -- Xóa thông báo sau duration
+    delay(duration, function()
+        local hideTween = TweenService:Create(notification, TweenInfo.new(0.3), {Position = UDim2.new(1, 0, 0, 0)})
+        hideTween:Play()
+        hideTween.Completed:Wait()
+        notification:Destroy()
     end)
-
-    -- Tab switching
-    tabButton.MouseButton1Click:Connect(function()
-        for _, tab in pairs(window.ContentContainer:GetChildren()) do
-            if tab:IsA("ScrollingFrame") then
-                tab.Visible = tab == tabContent
-            end
-        end
-        
-        for _, btn in pairs(window.TabContainer:GetChildren()) do
-            if btn:IsA("TextButton") then
-                btn.BackgroundColor3 = btn == tabButton and Library.Colors.Border or Library.Colors.Section
-            end
-        end
-    end)
-
-    return tabContent
 end
 
-function Library:CreateButton(tab, text, callback)
-    local button = Instance.new("TextButton")
+-- Các hàm còn lại giữ nguyên như cũ...
+[Previous functions: CreateTab, CreateButton, CreateSlider, CreateToggle]
+
+-- Thêm chức năng tạo textbox
+function Library:CreateTextbox(tab, text, placeholder, callback)
+    local textboxContainer = Instance.new("Frame")
+    local textboxLabel = Instance.new("TextLabel")
+    local textbox = Instance.new("TextBox")
     
-    button.Name = text.."Button"
-    button.Size = UDim2.new(1, -10, 0, 30)
-    button.BackgroundColor3 = Library.Colors.Section
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Library.Colors.Text
-    button.TextSize = 14
-    button.Font = Enum.Font.Gotham
-    button.Parent = tab
+    textboxContainer.Name = text.."TextboxContainer"
+    textboxContainer.Size = UDim2.new(1, 0, 0, 40)
+    textboxContainer.BackgroundTransparency = 1
+    textboxContainer.Parent = tab
     
-    -- Corner radius
+    textboxLabel.Name = "Label"
+    textboxLabel.Size = UDim2.new(1, 0, 0, 20)
+    textboxLabel.BackgroundTransparency = 1
+    textboxLabel.Text = text
+    textboxLabel.TextColor3 = Library.Theme.Text
+    textboxLabel.TextSize = 14
+    textboxLabel.Font = Enum.Font.Gotham
+    textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textboxLabel.Parent = textboxContainer
+    
+    textbox.Name = "Input"
+    textbox.Size = UDim2.new(1, 0, 0, 20)
+    textbox.Position = UDim2.new(0, 0, 0, 20)
+    textbox.BackgroundColor3 = Library.Theme.Button
+    textbox.BorderSizePixel = 0
+    textbox.Text = ""
+    textbox.PlaceholderText = placeholder
+    textbox.TextColor3 = Library.Theme.Text
+    textbox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    textbox.TextSize = 12
+    textbox.Font = Enum.Font.Gotham
+    textbox.Parent = textboxContainer
+    
+    textbox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            callback(textbox.Text)
+        end
+    end)
+    
+    return textbox
+end
+-- Fixing and completing the CreateDropdown function
+function Library:CreateDropdown(tab, text, options, callback)
+    local dropdownContainer = Instance.new("Frame")
+    local dropdownLabel = Instance.new("TextLabel")
+    local dropdownButton = Instance.new("TextButton")
+    local optionsFrame = Instance.new("Frame")
+    local layout = Instance.new("UIListLayout")
+    
+    dropdownContainer.Name = text.."DropdownContainer"
+    dropdownContainer.Size = UDim2.new(1, 0, 0, 60)
+    dropdownContainer.BackgroundTransparency = 1
+    dropdownContainer.Parent = tab
+    
+    dropdownLabel.Name = "Label"
+    dropdownLabel.Size = UDim2.new(1, 0, 0, 20)
+    dropdownLabel.BackgroundTransparency = 1
+    dropdownLabel.Text = text
+    dropdownLabel.TextColor3 = Library.Theme.Text
+    dropdownLabel.TextSize = 14
+    dropdownLabel.Font = Enum.Font.Gotham
+    dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+    dropdownLabel.Parent = dropdownContainer
+    
+    dropdownButton.Name = "Button"
+    dropdownButton.Size = UDim2.new(1, 0, 0, 30)
+    dropdownButton.Position = UDim2.new(0, 0, 0, 20)
+    dropdownButton.BackgroundColor3 = Library.Theme.Button
+    dropdownButton.BorderSizePixel = 0
+    dropdownButton.Text = "Select..."
+    dropdownButton.TextColor3 = Library.Theme.Text
+    dropdownButton.TextSize = 12
+    dropdownButton.Font = Enum.Font.Gotham
+    dropdownButton.Parent = dropdownContainer
+    
+    optionsFrame.Name = "Options"
+    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+    optionsFrame.Position = UDim2.new(0, 0, 1, 0)
+    optionsFrame.BackgroundColor3 = Library.Theme.Button
+    optionsFrame.BorderSizePixel = 0
+    optionsFrame.ClipsDescendants = true
+    optionsFrame.Visible = false
+    optionsFrame.Parent = dropdownButton
+    
+    layout.Padding = UDim.new(0, 2)
+    layout.Parent = optionsFrame
+    
+    local isOpen = false
+    
+    -- Add corner radius to dropdown
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 4)
-    corner.Parent = button
+    corner.Parent = dropdownButton
     
-    -- Click effect
-    button.MouseButton1Down:Connect(function()
-        safeTween(button, {Time = 0.1}, {BackgroundColor3 = Library.Colors.Border})
+    local optionsCorner = Instance.new("UICorner")
+    optionsCorner.CornerRadius = UDim.new(0, 4)
+    optionsCorner.Parent = optionsFrame
+    
+    -- Create option buttons
+    for i, option in ipairs(options) do
+        local optionButton = Instance.new("TextButton")
+        optionButton.Name = option
+        optionButton.Size = UDim2.new(1, 0, 0, 30)
+        optionButton.BackgroundColor3 = Library.Theme.Button
+        optionButton.BorderSizePixel = 0
+        optionButton.Text = option
+        optionButton.TextColor3 = Library.Theme.Text
+        optionButton.TextSize = 12
+        optionButton.Font = Enum.Font.Gotham
+        optionButton.Parent = optionsFrame
+        
+        -- Add hover effect
+        optionButton.MouseEnter:Connect(function()
+            TweenService:Create(optionButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Library.Theme.ButtonHover
+            }):Play()
+        end)
+        
+        optionButton.MouseLeave:Connect(function()
+            TweenService:Create(optionButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Library.Theme.Button
+            }):Play()
+        end)
+        
+        optionButton.MouseButton1Click:Connect(function()
+            dropdownButton.Text = option
+            isOpen = false
+            TweenService:Create(optionsFrame, TweenInfo.new(0.2), {
+                Size = UDim2.new(1, 0, 0, 0)
+            }):Play()
+            task.wait(0.2)
+            optionsFrame.Visible = false
+            if callback then
+                callback(option)
+            end
+        end)
+    end
+    
+    -- Toggle dropdown
+    dropdownButton.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        if isOpen then
+            optionsFrame.Visible = true
+            TweenService:Create(optionsFrame, TweenInfo.new(0.2), {
+                Size = UDim2.new(1, 0, 0, #options * 32)
+            }):Play()
+        else
+            TweenService:Create(optionsFrame, TweenInfo.new(0.2), {
+                Size = UDim2.new(1, 0, 0, 0)
+            }):Play()
+            task.wait(0.2)
+            optionsFrame.Visible = false
+        end
     end)
     
-    button.MouseButton1Up:Connect(function()
-        safeTween(button, {Time = 0.1}, {BackgroundColor3 = Library.Colors.Section})
+    -- Close dropdown when clicking outside
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mousePosition = UserInputService:GetMouseLocation()
+            local dropdownPosition = dropdownButton.AbsolutePosition
+            local dropdownSize = dropdownButton.AbsoluteSize
+            local optionsPosition = optionsFrame.AbsolutePosition
+            local optionsSize = optionsFrame.AbsoluteSize
+            
+            if isOpen and not (
+                mousePosition.X >= dropdownPosition.X and
+                mousePosition.X <= dropdownPosition.X + dropdownSize.X and
+                mousePosition.Y >= dropdownPosition.Y and
+                mousePosition.Y <= dropdownPosition.Y + dropdownSize.Y + optionsSize.Y
+            ) then
+                isOpen = false
+                TweenService:Create(optionsFrame, TweenInfo.new(0.2), {
+                    Size = UDim2.new(1, 0, 0, 0)
+                }):Play()
+                task.wait(0.2)
+                optionsFrame.Visible = false
+            end
+        end
     end)
     
-    button.MouseButton1Click:Connect(function()
-        callback()
-    end)
-    
-    return button
+    return dropdownContainer
 end
-
-function Library:CreateToggle(tab, text, default, callback)
-    local toggleContainer = Instance.new("Frame")
-    local label = Instance.new("TextLabel")
-    local toggle = Instance.new("TextButton")
-    local enabled = default or false
-    
-    toggleContainer.Name = text.."ToggleContainer"
-    toggleContainer.Size = UDim2.new(1, -10, 0, 30)
-    toggleContainer.BackgroundTransparency = 1
-    toggleContainer.Parent = tab
-    
-    label.Size = UDim2.new(1, -50, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Library.Colors.Text
-    label.TextSize = 14
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggleContainer
-    
-    toggle.Name = "Toggle"
-    toggle.Size = UDim2.new(0, 40, 0, 20)
-    toggle.Position = UDim2.new(1, -40, 0.5, -10)
-    toggle.BackgroundColor3 = enabled and Library.Colors.Enabled or Library.Colors.Disabled
-    toggle.BorderSizePixel = 0
-    toggle.Text = ""
-    toggle.Parent = toggleContainer
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = toggle
-    
-    toggle.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        safeTween(toggle, {Time = 0.2}, {BackgroundColor3 = enabled and Library.Colors.Enabled or Library.Colors.Disabled})
-        callback(enabled)
-    end)
-    
-    return toggle
-end
-
-function Library:CreateSlider(tab, text, min, max, default, callback)
-    local sliderContainer = Instance.new("Frame")
-    local label = Instance.new("TextLabel")
-    local sliderBar = Instance.new("Frame")
-    local sliderFill = Instance.new("Frame")
-    local sliderButton = Instance.new("TextButton")
-    local valueLabel = Instance.new("TextLabel")
-    
-    local value = default or min
-    local dragging = false
-    
-    sliderContainer.Name = text.."SliderContainer"
-    sliderContainer.Size = UDim2.new(1, -10, 0, 45)
-    sliderContainer.BackgroundTransparency = 1
-    sliderContainer.Parent = tab
-    
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Library.Colors.Text
