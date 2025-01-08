@@ -1,188 +1,194 @@
--- Fixed Advanced UI Library
+local Library = {}
 
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
-
-local AdvancedUI = {
-    theme = {
-        background = Color3.fromRGB(25, 25, 25),
-        foreground = Color3.fromRGB(35, 35, 35),
-        accent = Color3.fromRGB(0, 170, 255),
-        textColor = Color3.fromRGB(255, 255, 255),
-        elementBackground = Color3.fromRGB(45, 45, 45)
-    }
-}
-
--- Utility Functions
-local function Tween(object, properties, duration)
-    local tween = TweenService:Create(object, TweenInfo.new(duration or 0.2), properties)
-    tween:Play()
-    return tween
-end
-
-local function CreateElement(class, properties)
-    local element = Instance.new(class)
+-- Utility function to create UI elements
+function Library:CreateElement(type, properties)
+    local element = Instance.new(type)
     for property, value in pairs(properties) do
         element[property] = value
     end
     return element
 end
 
--- Main Window Class
-local Window = {}
-Window.__index = Window
+-- Create a window (main container)
+function Library:CreateWindow(name)
+    local window = self:CreateElement("ScreenGui", {
+        Name = name,
+        Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    })
 
-function AdvancedUI.new(title)
-    local window = setmetatable({}, Window)
-    window.title = title
-    window.tabs = {}
-    window.currentTab = nil
-    window.dragging = false
-    window.resizing = false
-    
-    -- Create Main GUI
-    window.gui = CreateElement("ScreenGui", {
-        Name = "AdvancedUI",
-        Parent = CoreGui,
-        ResetOnSpawn = false,
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    })
-    
-    -- Main Frame
-    window.mainFrame = CreateElement("Frame", {
+    local mainFrame = self:CreateElement("Frame", {
         Name = "MainFrame",
-        Parent = window.gui,
-        BackgroundColor3 = AdvancedUI.theme.background,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0.5, -300, 0.5, -200),
-        Size = UDim2.new(0, 600, 0, 400),
+        Parent = window,
+        Size = UDim2.new(0, 300, 0, 400),
+        Position = UDim2.new(0.5, -150, 0.5, -200),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
         ClipsDescendants = true
     })
-    
-    -- Title Bar
-    window.titleBar = CreateElement("Frame", {
-        Name = "TitleBar",
-        Parent = window.mainFrame,
-        BackgroundColor3 = AdvancedUI.theme.foreground,
-        BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 30)
-    })
-    
-    -- Title Text
-    window.titleText = CreateElement("TextLabel", {
+
+    local title = self:CreateElement("TextLabel", {
         Name = "Title",
-        Parent = window.titleBar,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 10, 0, 0),
-        Size = UDim2.new(1, -20, 1, 0),
-        Font = Enum.Font.GothamBold,
-        Text = title,
-        TextColor3 = AdvancedUI.theme.textColor,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
+        Parent = mainFrame,
+        Size = UDim2.new(1, 0, 0, 30),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        Text = name,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 18,
+        Font = Enum.Font.SourceSansBold
     })
-    
-    -- Tab Container
-    window.tabContainer = CreateElement("Frame", {
+
+    local tabContainer = self:CreateElement("Frame", {
         Name = "TabContainer",
-        Parent = window.mainFrame,
-        BackgroundColor3 = AdvancedUI.theme.foreground,
-        BorderSizePixel = 0,
+        Parent = mainFrame,
+        Size = UDim2.new(1, 0, 0, 30),
         Position = UDim2.new(0, 0, 0, 30),
-        Size = UDim2.new(0, 150, 1, -30)
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     })
-    
-    -- Tab List
-    window.tabList = CreateElement("ScrollingFrame", {
-        Name = "TabList",
-        Parent = window.tabContainer,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 5),
-        Size = UDim2.new(1, 0, 1, -10),
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollBarThickness = 2,
-        ScrollBarImageColor3 = AdvancedUI.theme.accent
-    })
-    
-    -- Tab Content Container
-    window.contentContainer = CreateElement("Frame", {
+
+    local contentContainer = self:CreateElement("Frame", {
         Name = "ContentContainer",
-        Parent = window.mainFrame,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 150, 0, 30),
-        Size = UDim2.new(1, -150, 1, -30),
-        ClipsDescendants = true
+        Parent = mainFrame,
+        Size = UDim2.new(1, 0, 1, -60),
+        Position = UDim2.new(0, 0, 0, 60),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     })
-    
-    -- Resize Handle
-    window.resizeHandle = CreateElement("TextButton", {
-        Name = "ResizeHandle",
-        Parent = window.mainFrame,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(1, -20, 1, -20),
-        Size = UDim2.new(0, 20, 0, 20),
-        Text = "⟊",
-        TextColor3 = AdvancedUI.theme.accent,
-        Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        ZIndex = 10
-    })
-    
-    -- Make Window Draggable
-    local dragStart, startPos
-    window.titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            window.dragging = true
-            dragStart = input.Position
-            startPos = window.mainFrame.Position
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if window.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            window.mainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        elseif window.resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - window.resizeStart
-            local newSize = window.startSize + Vector2.new(delta.X, delta.Y)
-            window.mainFrame.Size = UDim2.new(0, math.max(400, newSize.X), 0, math.max(300, newSize.Y))
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            window.dragging = false
-            window.resizing = false
-        end
-    end)
-    
-    -- Make Window Resizable
-    window.resizeHandle.MouseButton1Down:Connect(function()
-        window.resizing = true
-        window.resizeStart = UserInputService:GetMouseLocation()
-        window.startSize = Vector2.new(window.mainFrame.AbsoluteSize.X, window.mainFrame.AbsoluteSize.Y)
-    end)
-    
-    -- Apply Corners
-    local function ApplyCorners(instance, radius)
-        CreateElement("UICorner", {
-            CornerRadius = UDim.new(0, radius or 5),
-            Parent = instance
-        })
-    end
-    
-    ApplyCorners(window.mainFrame, 8)
-    ApplyCorners(window.tabContainer, 8)
-    
-    return window
+
+    return {
+        Window = window,
+        MainFrame = mainFrame,
+        TabContainer = tabContainer,
+        ContentContainer = contentContainer
+    }
 end
 
--- Other functionalities remain unchanged.
-return AdvancedUI
+-- Create a tab
+function Library:CreateTab(window, name)
+    local tabButton = self:CreateElement("TextButton", {
+        Name = name,
+        Parent = window.TabContainer,
+        Size = UDim2.new(0.5, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        Text = name,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+
+    local tabContent = self:CreateElement("Frame", {
+        Name = name .. "Content",
+        Parent = window.ContentContainer,
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        Visible = false
+    })
+
+    tabButton.MouseButton1Click:Connect(function()
+        for _, child in ipairs(window.ContentContainer:GetChildren()) do
+            child.Visible = false
+        end
+        tabContent.Visible = true
+    end)
+
+    return tabContent
+end
+
+-- Create a button
+function Library:CreateButton(parent, name, callback)
+    local button = self:CreateElement("TextButton", {
+        Name = name,
+        Parent = parent,
+        Size = UDim2.new(0.8, 0, 0, 30),
+        Position = UDim2.new(0.1, 0, 0, 0),
+        BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+        Text = name,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- Create a textbox
+function Library:CreateTextBox(parent, placeholder)
+    local textBox = self:CreateElement("TextBox", {
+        Name = "TextBox",
+        Parent = parent,
+        Size = UDim2.new(0.8, 0, 0, 30),
+        Position = UDim2.new(0.1, 0, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Text = "",
+        PlaceholderText = placeholder,
+        TextColor3 = Color3.fromRGB(0, 0, 0),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+
+    return textBox
+end
+
+-- Create a dropdown
+function Library:CreateDropdown(parent, options)
+    local dropdown = self:CreateElement("TextButton", {
+        Name = "Dropdown",
+        Parent = parent,
+        Size = UDim2.new(0.8, 0, 0, 30),
+        Position = UDim2.new(0.1, 0, 0, 80),
+        BackgroundColor3 = Color3.fromRGB(80, 80, 80),
+        Text = "Select an option",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+
+    local dropdownFrame = self:CreateElement("Frame", {
+        Name = "DropdownFrame",
+        Parent = parent,
+        Size = UDim2.new(0.8, 0, 0, 0),
+        Position = UDim2.new(0.1, 0, 0, 110),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        Visible = false
+    })
+
+    dropdown.MouseButton1Click:Connect(function()
+        dropdownFrame.Visible = not dropdownFrame.Visible
+        dropdownFrame.Size = UDim2.new(0.8, 0, 0, #options * 30)
+    end)
+
+    for i, option in ipairs(options) do
+        local optionButton = self:CreateElement("TextButton", {
+            Name = option,
+            Parent = dropdownFrame,
+            Size = UDim2.new(1, 0, 0, 30),
+            Position = UDim2.new(0, 0, 0, (i - 1) * 30),
+            BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+            Text = option,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 14,
+            Font = Enum.Font.SourceSans
+        })
+
+        optionButton.MouseButton1Click:Connect(function()
+            dropdown.Text = option
+            dropdownFrame.Visible = false
+        end)
+    end
+
+    return dropdown
+end
+
+-- Simple animation (fade in/out)
+function Library:AnimateFade(element, duration, transparency)
+    local startTransparency = element.BackgroundTransparency
+    local step = (transparency - startTransparency) / (duration * 60)
+
+    for i = 1, duration * 60 do
+        element.BackgroundTransparency = element.BackgroundTransparency + step
+        wait(1 / 60)
+    end
+end
+
+return Library
