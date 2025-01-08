@@ -4,9 +4,9 @@ local CoreGui = game:GetService("CoreGui")
 
 local Library = {}
 Library.__index = Library
-Library.ToggleUI = Enum.KeyCode.RightControl -- Default toggle key
+Library.ToggleUI = Enum.KeyCode.RightControl -- Default hotkey to toggle UI
 Library.Draggable = true -- Enable dragging
-Library.MinimizeKey = Enum.KeyCode.M -- Minimize shortcut key
+Library.MinimizeKey = Enum.KeyCode.M -- Hotkey to minimize
 Library.Theme = {
     Background = Color3.fromRGB(30, 30, 30),
     Header = Color3.fromRGB(40, 40, 40),
@@ -17,28 +17,35 @@ Library.Theme = {
     Slider = Color3.fromRGB(60, 120, 255)
 }
 
--- Create the main UI window
-function Library:CreateWindow(windowTitle)
+-- Function to safely set the parent of the UI
+local function SetParent(gui)
+    if syn and syn.protect_gui then
+        syn.protect_gui(gui)
+        gui.Parent = CoreGui
+    elseif gethui then
+        gui.Parent = gethui()
+    else
+        gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    end
+end
+
+-- Create main UI window
+function Library:CreateWindow(title)
     local window = Instance.new("ScreenGui")
     local main = Instance.new("Frame")
     local header = Instance.new("Frame")
     local minimize = Instance.new("TextButton")
-    local title = Instance.new("TextLabel")
+    local titleLabel = Instance.new("TextLabel")
     local tabContainer = Instance.new("Frame")
     local contentContainer = Instance.new("Frame")
 
-    -- Configure ScreenGui
-    if syn and syn.protect_gui then
-        syn.protect_gui(window)
-        window.Parent = CoreGui
-    else
-        window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    end
+    -- Setup ScreenGui
+    SetParent(window)
     window.Name = "UILibrary"
     window.ResetOnSpawn = false
     window.DisplayOrder = 999
 
-    -- Main frame
+    -- Main frame settings
     main.Name = "Main"
     main.Size = UDim2.new(0, 450, 0, 350)
     main.Position = UDim2.new(0.5, -225, 0.5, -175)
@@ -52,7 +59,7 @@ function Library:CreateWindow(windowTitle)
     corner.CornerRadius = UDim.new(0, 5)
     corner.Parent = main
 
-    -- Header
+    -- Header with minimize button
     header.Name = "Header"
     header.Size = UDim2.new(1, 0, 0, 30)
     header.BackgroundColor3 = Library.Theme.Header
@@ -69,18 +76,18 @@ function Library:CreateWindow(windowTitle)
     minimize.Font = Enum.Font.GothamBold
     minimize.Parent = header
 
-    title.Name = "Title"
-    title.Size = UDim2.new(1, -60, 1, 0)
-    title.Position = UDim2.new(0, 10, 0, 0)
-    title.BackgroundTransparency = 1
-    title.Text = windowTitle
-    title.TextColor3 = Library.Theme.Text
-    title.TextSize = 14
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = header
+    titleLabel.Name = "Title"
+    titleLabel.Size = UDim2.new(1, -60, 1, 0)
+    titleLabel.Position = UDim2.new(0, 10, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Library.Theme.Text
+    titleLabel.TextSize = 14
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = header
 
-    -- Tab and Content Containers
+    -- Containers for tabs and content
     tabContainer.Name = "TabContainer"
     tabContainer.Size = UDim2.new(0, 120, 1, -30)
     tabContainer.Position = UDim2.new(0, 0, 0, 30)
@@ -98,8 +105,7 @@ function Library:CreateWindow(windowTitle)
     -- Dragging functionality
     if Library.Draggable then
         local dragging = false
-        local dragStart
-        local startPos
+        local dragInput, dragStart, startPos
 
         header.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -132,12 +138,21 @@ function Library:CreateWindow(windowTitle)
         minimize.Text = minimized and "+" or "-"
     end)
 
+    -- Hotkey to toggle UI visibility
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Library.ToggleUI then
+            window.Enabled = not window.Enabled
+        end
+    end)
+
     return {
         Window = window,
         Main = main,
         TabContainer = tabContainer,
-        ContentContainer = contentContainer
+        ContentContainer = contentContainer,
+        Tabs = {}
     }
 end
 
--- The rest of your script should follow similar improvements.
+-- Return Library for use with `loadstring`
+return Library
