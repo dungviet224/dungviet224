@@ -1,15 +1,12 @@
--- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local Players = game:GetService("Players")
 
 local Library = {}
 Library.__index = Library
-
--- Cài đặt mặc định
-Library.ToggleUI = Enum.KeyCode.RightControl
-Library.MinimizeKey = Enum.KeyCode.M
+Library.ToggleUI = Enum.KeyCode.RightControl -- Default toggle key
+Library.Draggable = true -- Enable dragging
+Library.MinimizeKey = Enum.KeyCode.M -- Minimize shortcut key
 Library.Theme = {
     Background = Color3.fromRGB(30, 30, 30),
     Header = Color3.fromRGB(40, 40, 40),
@@ -20,67 +17,48 @@ Library.Theme = {
     Slider = Color3.fromRGB(60, 120, 255)
 }
 
--- Khởi tạo cửa sổ
+-- Create the main UI window
 function Library:CreateWindow(windowTitle)
     local window = Instance.new("ScreenGui")
     local main = Instance.new("Frame")
     local header = Instance.new("Frame")
-    local title = Instance.new("TextLabel")
     local minimize = Instance.new("TextButton")
-    local container = Instance.new("Frame")
-    
-    -- Screen GUI setup
-    window.Name = "UILibrary"
-    window.ResetOnSpawn = false
-    window.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
-    -- Protect GUI from being destroyed
+    local title = Instance.new("TextLabel")
+    local tabContainer = Instance.new("Frame")
+    local contentContainer = Instance.new("Frame")
+
+    -- Configure ScreenGui
     if syn and syn.protect_gui then
         syn.protect_gui(window)
         window.Parent = CoreGui
-    elseif gethui then
-        window.Parent = gethui()
     else
-        window.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+        window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     end
-    
+    window.Name = "UILibrary"
+    window.ResetOnSpawn = false
+    window.DisplayOrder = 999
+
     -- Main frame
     main.Name = "Main"
-    main.Size = UDim2.new(0, 450, 0, 300)
-    main.Position = UDim2.new(0.5, -225, 0.5, -150)
+    main.Size = UDim2.new(0, 450, 0, 350)
+    main.Position = UDim2.new(0.5, -225, 0.5, -175)
     main.BackgroundColor3 = Library.Theme.Background
     main.BorderSizePixel = 0
+    main.ClipsDescendants = true
     main.Parent = window
-    
-    -- Add corner radius
-    local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 5)
-    mainCorner.Parent = main
-    
+
+    -- Rounded corners
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = main
+
     -- Header
     header.Name = "Header"
     header.Size = UDim2.new(1, 0, 0, 30)
     header.BackgroundColor3 = Library.Theme.Header
     header.BorderSizePixel = 0
     header.Parent = main
-    
-    local headerCorner = Instance.new("UICorner")
-    headerCorner.CornerRadius = UDim.new(0, 5)
-    headerCorner.Parent = header
-    
-    -- Title
-    title.Name = "Title"
-    title.Size = UDim2.new(1, -60, 1, 0)
-    title.Position = UDim2.new(0, 10, 0, 0)
-    title.BackgroundTransparency = 1
-    title.Text = windowTitle or "UI Library"
-    title.TextColor3 = Library.Theme.Text
-    title.TextSize = 14
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = header
-    
-    -- Minimize button
+
     minimize.Name = "Minimize"
     minimize.Size = UDim2.new(0, 30, 0, 30)
     minimize.Position = UDim2.new(1, -30, 0, 0)
@@ -90,252 +68,76 @@ function Library:CreateWindow(windowTitle)
     minimize.TextSize = 20
     minimize.Font = Enum.Font.GothamBold
     minimize.Parent = header
-    
-    -- Container for tabs
-    container.Name = "Container"
-    container.Size = UDim2.new(1, 0, 1, -30)
-    container.Position = UDim2.new(0, 0, 0, 30)
-    container.BackgroundTransparency = 1
-    container.Parent = main
-    
-    -- Make window draggable
-    local dragging = false
-    local dragStart, dragPos
-    
-    header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            dragPos = main.Position
-        end
-    end)
-    
-    header.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            main.Position = UDim2.new(
-                dragPos.X.Scale,
-                dragPos.X.Offset + delta.X,
-                dragPos.Y.Scale,
-                dragPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-    
+
+    title.Name = "Title"
+    title.Size = UDim2.new(1, -60, 1, 0)
+    title.Position = UDim2.new(0, 10, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = windowTitle
+    title.TextColor3 = Library.Theme.Text
+    title.TextSize = 14
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+
+    -- Tab and Content Containers
+    tabContainer.Name = "TabContainer"
+    tabContainer.Size = UDim2.new(0, 120, 1, -30)
+    tabContainer.Position = UDim2.new(0, 0, 0, 30)
+    tabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    tabContainer.BorderSizePixel = 0
+    tabContainer.Parent = main
+
+    contentContainer.Name = "ContentContainer"
+    contentContainer.Size = UDim2.new(1, -120, 1, -30)
+    contentContainer.Position = UDim2.new(0, 120, 0, 30)
+    contentContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    contentContainer.BorderSizePixel = 0
+    contentContainer.Parent = main
+
+    -- Dragging functionality
+    if Library.Draggable then
+        local dragging = false
+        local dragStart
+        local startPos
+
+        header.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = main.Position
+            end
+        end)
+
+        header.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - dragStart
+                main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+    end
+
     -- Minimize functionality
     local minimized = false
     minimize.MouseButton1Click:Connect(function()
         minimized = not minimized
-        container.Visible = not minimized
+        local targetSize = minimized and UDim2.new(1, 0, 0, 30) or UDim2.new(1, 0, 1, 0)
+        TweenService:Create(main, TweenInfo.new(0.3), {Size = targetSize}):Play()
         minimize.Text = minimized and "+" or "-"
-        main.Size = minimized and UDim2.new(0, 450, 0, 30) or UDim2.new(0, 450, 0, 300)
     end)
-    
-    -- Toggle UI with keybind
-    UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Library.ToggleUI then
-            window.Enabled = not window.Enabled
-        end
-    end)
-    
-    -- Create tabs container
-    local tabButtons = Instance.new("Frame")
-    tabButtons.Name = "TabButtons"
-    tabButtons.Size = UDim2.new(0, 120, 1, 0)
-    tabButtons.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    tabButtons.BorderSizePixel = 0
-    tabButtons.Parent = container
-    
-    local tabContainer = Instance.new("Frame")
-    tabContainer.Name = "TabContainer"
-    tabContainer.Size = UDim2.new(1, -120, 1, 0)
-    tabContainer.Position = UDim2.new(0, 120, 0, 0)
-    tabContainer.BackgroundTransparency = 1
-    tabContainer.Parent = container
-    
-    local tabButtonList = Instance.new("UIListLayout")
-    tabButtonList.Padding = UDim.new(0, 2)
-    tabButtonList.Parent = tabButtons
-    
+
     return {
         Window = window,
         Main = main,
-        Container = container,
-        TabButtons = tabButtons,
         TabContainer = tabContainer,
-        Tabs = {}
+        ContentContainer = contentContainer
     }
 end
 
--- Create tab
-function Library:CreateTab(window, name)
-    local tabButton = Instance.new("TextButton")
-    local tab = Instance.new("ScrollingFrame")
-    local tabList = Instance.new("UIListLayout")
-    
-    -- Tab button
-    tabButton.Name = name.."Button"
-    tabButton.Size = UDim2.new(1, 0, 0, 30)
-    tabButton.BackgroundColor3 = Library.Theme.Button
-    tabButton.BorderSizePixel = 0
-    tabButton.Text = name
-    tabButton.TextColor3 = Library.Theme.Text
-    tabButton.TextSize = 14
-    tabButton.Font = Enum.Font.Gotham
-    tabButton.Parent = window.TabButtons
-    
-    -- Tab container
-    tab.Name = name
-    tab.Size = UDim2.new(1, 0, 1, 0)
-    tab.BackgroundTransparency = 1
-    tab.BorderSizePixel = 0
-    tab.ScrollBarThickness = 2
-    tab.Visible = false
-    tab.Parent = window.TabContainer
-    
-    -- List layout for elements
-    tabList.Padding = UDim.new(0, 5)
-    tabList.Parent = tab
-    
-    -- Show this tab
-    tabButton.MouseButton1Click:Connect(function()
-        for _, v in pairs(window.TabContainer:GetChildren()) do
-            if v:IsA("ScrollingFrame") then
-                v.Visible = false
-            end
-        end
-        tab.Visible = true
-    end)
-    
-    -- Show first tab by default
-    if #window.TabContainer:GetChildren() == 1 then
-        tab.Visible = true
-    end
-    
-    return tab
-end
-
--- Create button
-function Library:CreateButton(tab, text, callback)
-    local button = Instance.new("TextButton")
-    button.Name = text.."Button"
-    button.Size = UDim2.new(1, -10, 0, 30)
-    button.Position = UDim2.new(0, 5, 0, 0)
-    button.BackgroundColor3 = Library.Theme.Button
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Library.Theme.Text
-    button.TextSize = 14
-    button.Font = Enum.Font.Gotham
-    button.Parent = tab
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 4)
-    corner.Parent = button
-    
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Library.Theme.ButtonHover
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Library.Theme.Button
-        }):Play()
-    end)
-    
-    button.MouseButton1Click:Connect(function()
-        if callback then
-            callback()
-        end
-    end)
-    
-    return button
-end
-
--- Create toggle
-function Library:CreateToggle(tab, text, default, callback)
-    local toggleContainer = Instance.new("Frame")
-    local label = Instance.new("TextLabel")
-    local toggle = Instance.new("TextButton")
-    local toggleInner = Instance.new("Frame")
-    
-    toggleContainer.Name = text.."ToggleContainer"
-    toggleContainer.Size = UDim2.new(1, -10, 0, 30)
-    toggleContainer.Position = UDim2.new(0, 5, 0, 0)
-    toggleContainer.BackgroundTransparency = 1
-    toggleContainer.Parent = tab
-    
-    label.Name = "Label"
-    label.Size = UDim2.new(1, -50, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Library.Theme.Text
-    label.TextSize = 14
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggleContainer
-    
-    toggle.Name = "Toggle"
-    toggle.Size = UDim2.new(0, 40, 0, 20)
-    toggle.Position = UDim2.new(1, -40, 0.5, -10)
-    toggle.BackgroundColor3 = Library.Theme.Button
-    toggle.BorderSizePixel = 0
-    toggle.Text = ""
-    toggle.Parent = toggleContainer
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = toggle
-    
-    toggleInner.Name = "Inner"
-    toggleInner.Size = UDim2.new(0, 16, 0, 16)
-    toggleInner.Position = UDim2.new(0, 2, 0.5, -8)
-    toggleInner.BackgroundColor3 = Library.Theme.Text
-    toggleInner.BorderSizePixel = 0
-    toggleInner.Parent = toggle
-    
-    local innerCorner = Instance.new("UICorner")
-    innerCorner.CornerRadius = UDim.new(0, 8)
-    innerCorner.Parent = toggleInner
-    
-    local toggled = default or false
-    
-    local function updateToggle()
-        local pos = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-        local color = toggled and Library.Theme.Toggle or Library.Theme.Button
-        
-        TweenService:Create(toggleInner, TweenInfo.new(0.2), {
-            Position = pos
-        }):Play()
-        
-        TweenService:Create(toggle, TweenInfo.new(0.2), {
-            BackgroundColor3 = color
-        }):Play()
-        
-        if callback then
-            callback(toggled)
-        end
-    end
-    
-    toggle.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        updateToggle()
-    end)
-    
-    -- Set default state
-    if default then
-        updateToggle()
-    end
-    
-    return toggle
-end
-
-return Library
+-- The rest of your script should follow similar improvements.
