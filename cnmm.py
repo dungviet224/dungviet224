@@ -37,9 +37,7 @@ context: BrowserContext = None
 active_tasks: Dict[str, bool] = {}  # Track active tasks by ID
 task_pages: Dict[str, Page] = {}  # Map task ID to page
 class LinkedInRequest(BaseModel):
-    profile_url: str
-    password: str
-    new_cookie: str    
+    profile_url: str 
 class TaskManager:
     def __init__(self):
         self.active_tasks: Set[str] = set()
@@ -593,4 +591,4 @@ if __name__ == "__main__":
     
     atexit.register(cleanup_on_exit)
     
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
