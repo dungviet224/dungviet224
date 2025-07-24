@@ -16,6 +16,7 @@ import random
 import pandas as pd
 import re
 from urllib.parse import parse_qs, urlparse
+from setuptools import setup
 
 CHROME_ARGUMENTS = [
     "-no-first-run",
