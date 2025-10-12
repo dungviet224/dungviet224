@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Tuần Hoàn Hóa Học Tương Tác (118 Nguyên Tố)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --header-color: #003f5c;
+            --border-color: #ccc;
+            --shadow-color: rgba(0, 0, 0, 0.15);
+            --selected-glow: rgba(0, 123, 255, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .introduction-container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #fff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .introduction-container p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+            margin: 0 0 15px 0;
+        }
+
+        h1 {
+            color: var(--header-color);
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .credit {
+            color: #555;
+            font-size: 1em;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 0px;
+        }
+
+        #periodic-table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        #periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, minmax(60px, 1fr));
+            grid-template-rows: repeat(10, minmax(60px, 1fr));
+            gap: 5px;
+            margin: 20px auto;
+            min-width: 1200px;
+            transition: opacity 0.3s ease;
+        }
+
+        .element {
+            position: relative;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .element:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 20px var(--shadow-color);
+            z-index: 10;
+        }
+
+        .element.dimmed {
+            opacity: 0.4;
+        }
+
+        .element.selected {
+            opacity: 1;
+            transform: scale(1.15);
+            border-color: #007bff;
+            box-shadow: 0 0 15px var(--selected-glow);
+            z-index: 20;
+        }
+
+        .element .atomic-number {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            font-size: 0.6em;
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .element .symbol {
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .element .name {
+            font-size: 0.65em;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+        
+        /* --- Popover Styling --- */
+        #element-popover {
+            position: absolute;
+            width: 380px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: visibility 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        #element-popover.visible {
+            visibility: visible;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .popover-content {
+            padding: 25px 30px;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--header-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-symbol {
+            font-size: 3em;
+            font-weight: 700;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            flex-shrink: 0;
+        }
+        .detail-name-atomic h2 {
+            margin: 0;
+            font-size: 2em;
+            color: var(--header-color);
+            text-align: left;
+        }
+        .detail-name-atomic span {
+            font-size: 1em;
+            color: #555;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-item {
+            background-color: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .detail-item strong {
+            display: block;
+            color: #005f73;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .detail-item span {
+            font-size: 1em;
+            color: #333;
+        }
+        .detail-full {
+            grid-column: 1 / -1;
+        }
+        .detail-summary {
+            margin-top: 15px;
+        }
+        .detail-summary strong {
+            display: block;
+            color: var(--header-color);
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        .detail-summary p {
+            font-size: 1em;
+            line-height: 1.6;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        /* --- Element Category Colors (Pastel Theme) --- */
+        .diatomic.nonmetal { background-color: #98ff98; }
+        .noble-gas { background-color: #d8b4fe; }
+        .alkali-metal { background-color: #ffadad; }
+        .alkaline-earth-metal { background-color: #ffd6a5; }
+        .metalloid { background-color: #caffbf; }
+        .halogen { background-color: #fdffb6; }
+        .post-transition-metal { background-color: #a0c4ff; }
+        .transition-metal { background-color: #9bf6ff; }
+        .lanthanide { background-color: #ffc6ff; }
+        .actinide { background-color: #ffc8dd; }
+        .unknown, .polyatomic.nonmetal { background-color: #e9ecef; }
+    </style>
+</head>
+<body>
+
+    <div class="introduction-container">
+        <p>Kính chào cô và các bạn đã đến với sản phẩm học tập của chúng em.</p>
+        <h1>Bảng Tuần Hoàn Hóa Học Tương Tác</h1>
+        <p class="credit">Thực hiện bởi: Tổ 1</p>
+    </div>
+
+    <div id="periodic-table-container">
+        <div id="periodic-table">
+            <!-- Các nguyên tố sẽ được chèn vào đây bằng JavaScript -->
+        </div>
+    </div>
+    <div id="element-popover">
+        <div class="popover-content">
+           <!-- Chi tiết nguyên tố sẽ được chèn vào đây -->
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const periodicTable = document.getElementById('periodic-table');
+            const popover = document.getElementById('element-popover');
+            const popoverContent = popover.querySelector('.popover-content');
+            
+            const dataURL = 'https://raw.githubusercontent.com/Bowserinator/Periodic-Table-JSON/master/PeriodicTableJSON.json';
+            let currentSelectedElement = null;
+
+            // --- Dữ liệu tóm tắt đã được dịch sẵn ---
+            const translatedSummaries = {
+                1: "Hydro là một nguyên tố hóa học với ký hiệu H và số hiệu nguyên tử là 1. Ở điều kiện tiêu chuẩn, hydro là một chất khí hai nguyên tử không màu, không mùi, không vị, phi kim, rất dễ cháy với công thức phân tử H2.",
+                2: "Heli là một nguyên tố hóa học với ký hiệu He và số hiệu nguyên tử là 2. Nó là một khí trơ không màu, không mùi, không vị, không độc, đứng đầu trong nhóm khí hiếm trong bảng tuần hoàn. Điểm sôi của nó là thấp nhất trong tất cả các nguyên tố.",
+                3: "Liti là một nguyên tố hóa học với ký hiệu Li và số hiệu nguyên tử là 3. Nó là một kim loại kiềm mềm, màu trắng bạc. Trong điều kiện tiêu chuẩn, nó là kim loại nhẹ nhất và là nguyên tố rắn có khối lượng riêng thấp nhất.",
+                4: "Beryli là một nguyên tố hóa học với ký hiệu Be và số hiệu nguyên tử là 4. Nó là một nguyên tố tương đối hiếm trong vũ trụ, thường xuất hiện do sự va chạm của các hạt nhân nguyên tử lớn hơn với các tia vũ trụ. Trong các ngôi sao, beryli bị cạn kiệt khi nó được tổng hợp thành các nguyên tố nặng hơn.",
+                5: "Bo là một nguyên tố hóa học với ký hiệu B và số hiệu nguyên tử là 5. Được sản xuất hoàn toàn bởi sự phân mảnh tia vũ trụ và siêu tân tinh chứ không phải bởi sự tổng hợp hạt nhân sao, nó là một nguyên tố có hàm lượng thấp trong Hệ Mặt Trời và trong lớp vỏ Trái Đất.",
+                6: "Carbon là một nguyên tố hóa học với ký hiệu C và số hiệu nguyên tử là 6. Là một phi kim tứ hóa trị, carbon có một số dạng thù hình.",
+                7: "Nitơ là một nguyên tố hóa học với ký hiệu N và số hiệu nguyên tử là 7. Nó được nhà vật lý người Scotland Daniel Rutherford phát hiện lần đầu tiên và phân lập vào năm 1772.",
+                8: "Oxy là một nguyên tố hóa học với ký hiệu O và số hiệu nguyên tử là 8. Nó là một thành viên của nhóm chalcogen trong bảng tuần hoàn và là một phi kim có độ phản ứng cao và là chất oxy hóa dễ dàng tạo thành oxit với hầu hết các nguyên tố cũng như các hợp chất khác.",
+                9: "Flo là một nguyên tố hóa học với ký hiệu F và số hiệu nguyên tử là 9. Nó là khí đơn nguyên tố màu vàng nhạt, có độc tính cao nhất. Là nguyên tố có độ âm điện cao nhất, nó cực kỳ phản ứng, vì nó phản ứng với hầu hết các nguyên tố khác, ngoại trừ heli và neon.",
+                10: "Neon là một nguyên tố hóa học với ký hiệu Ne và số hiệu nguyên tử là 10. Nó là một khí hiếm. Neon là một khí trơ không màu, không mùi trong điều kiện tiêu chuẩn.",
+                11: "Natri là một nguyên tố hóa học với ký hiệu Na và số hiệu nguyên tử là 11. Nó là một kim loại kiềm mềm, màu trắng bạc, có độ phản ứng cao. Natri là một kim loại kiềm, nằm trong nhóm 1 của bảng tuần hoàn, bởi vì nó có một electron duy nhất trong lớp vỏ ngoài cùng mà nó sẵn sàng cho đi, tạo ra một ion mang điện tích dương - cation Na+.",
+                12: "Magnesi là một nguyên tố hóa học với ký hiệu Mg và số hiệu nguyên tử là 12. Nó là một kim loại kiềm thổ và là nguyên tố phổ biến thứ tám trong vũ trụ theo khối lượng và thứ chín nếu tính theo mol, sau hydro, heli, oxy, carbon, neon, sắt, nitơ và silic.",
+                13: "Nhôm là một nguyên tố hóa học trong nhóm bo với ký hiệu Al và số hiệu nguyên tử là 13. Nó có màu trắng bạc, mềm, không từ tính và dễ uốn. Nhôm là nguyên tố phổ biến thứ ba (sau oxy và silic) và là kim loại phổ biến nhất trong lớp vỏ Trái Đất.",
+                14: "Silic là một nguyên tố hóa học với ký hiệu Si và số hiệu nguyên tử là 14. Nó là một á kim tứ hóa trị, ít phản ứng hơn so với nguyên tử tương tự là carbon, phi kim ngay phía trên nó trong bảng tuần hoàn, nhưng phản ứng mạnh hơn germani, á kim ngay phía dưới nó.",
+                15: "Phốt pho là một nguyên tố hóa học với ký hiệu P và số hiệu nguyên tử là 15. Là một nguyên tố, phốt pho tồn tại ở hai dạng chính - phốt pho trắng và phốt pho đỏ - nhưng do có độ phản ứng cao, phốt pho không bao giờ được tìm thấy dưới dạng một nguyên tố tự do trên Trái Đất.",
+                16: "Lưu huỳnh là một nguyên tố hóa học với ký hiệu S và số hiệu nguyên tử là 16. Nó là một phi kim phổ biến, đa hóa trị. Trong điều kiện bình thường, các nguyên tử lưu huỳnh tạo thành các phân tử bát diện mạch vòng với công thức hóa học S8.",
+                17: "Clo là một nguyên tố hóa học với ký hiệu Cl và số hiệu nguyên tử là 17. Nó là halogen thứ hai nhẹ nhất, nằm giữa flo và brom trong bảng tuần hoàn và các tính chất của nó hầu hết là trung gian giữa chúng. Clo là một khí màu vàng xanh trong điều kiện tiêu chuẩn.",
+                18: "Argon là một nguyên tố hóa học với ký hiệu Ar và số hiệu nguyên tử là 18. Nó nằm trong nhóm 18 của bảng tuần hoàn và là một khí hiếm. Argon là khí phổ biến thứ ba trong khí quyển Trái Đất, với tỷ lệ 0.934% (9340 ppmv), làm cho nó phổ biến hơn gấp đôi so với hơi nước (trung bình khoảng 4000 ppmv, nhưng thay đổi rất nhiều), gấp 23 lần so với khí carbon dioxide (400 ppmv), và hơn 500 lần so với neon (18 ppmv).",
+                19: "Kali là một nguyên tố hóa học với ký hiệu K và số hiệu nguyên tử là 19. Nó là một kim loại kiềm màu trắng bạc, đủ mềm để có thể cắt bằng dao với ít lực. Kali phản ứng nhanh với oxy trong khí quyển chỉ trong vài giây, tạo thành kali peroxide màu trắng bong tróc.",
+                20: "Canxi là một nguyên tố hóa học với ký hiệu Ca và số hiệu nguyên tử là 20. Canxi là một kim loại kiềm thổ màu xám nhạt, và là nguyên tố phổ biến thứ năm theo khối lượng trong lớp vỏ Trái Đất. Canxi cũng là ion phổ biến thứ năm theo khối lượng trong nước biển cả về nồng độ mol và khối lượng, sau natri, clorua, magnesi và sulfat.",
+                21: "Scandi là một nguyên tố hóa học với ký hiệu Sc và số hiệu nguyên tử là 21. Là một kim loại chuyển tiếp màu trắng bạc, trong lịch sử nó đôi khi được phân loại là một nguyên tố đất hiếm, cùng với yttri và các lanthanide. Nó được phát hiện vào năm 1879 bằng phương pháp phân tích quang phổ các khoáng vật euxenite và gadolinite từ Scandinavia.",
+                22: "Titan là một nguyên tố hóa học với ký hiệu Ti và số hiệu nguyên tử là 22. Nó là một kim loại chuyển tiếp có màu bạc, khối lượng riêng thấp và độ bền cao. Titan có khả năng chống ăn mòn trong nước biển, nước cường toan và clo.",
+                23: "Vanadi là một nguyên tố hóa học với ký hiệu V và số hiệu nguyên tử là 23. Nó là một kim loại chuyển tiếp cứng, màu trắng bạc, dễ uốn. Nguyên tố này chỉ được tìm thấy ở dạng hợp chất trong tự nhiên, nhưng một khi được phân lập nhân tạo, sự hình thành một lớp oxit sẽ ổn định kim loại tự do chống lại quá trình oxy hóa tiếp theo.",
+                24: "Crom là một nguyên tố hóa học với ký hiệu Cr và số hiệu nguyên tử là 24. Nó là nguyên tố đầu tiên trong Nhóm 6. Nó là một kim loại màu xám thép, bóng, cứng và giòn, có khả năng đánh bóng cao, chống xỉn màu và có điểm nóng chảy cao.",
+                25: "Mangan là một nguyên tố hóa học với ký hiệu Mn và số hiệu nguyên tử là 25. Nó không được tìm thấy dưới dạng một nguyên tố tự do trong tự nhiên; nó thường được tìm thấy trong các khoáng vật kết hợp với sắt. Mangan là một kim loại chuyển tiếp với nhiều ứng dụng hợp kim công nghiệp quan trọng, đặc biệt là trong thép không gỉ.",
+                26: "Sắt là một nguyên tố hóa học với ký hiệu Fe và số hiệu nguyên tử là 26. Nó là một kim loại trong chuỗi chuyển tiếp đầu tiên. Theo khối lượng, sắt là nguyên tố phổ biến nhất trên Trái Đất, tạo thành phần lớn lõi ngoài và lõi trong của Trái Đất.",
+                27: "Coban là một nguyên tố hóa học với ký hiệu Co và số hiệu nguyên tử là 27. Giống như niken, coban chỉ được tìm thấy trong lớp vỏ Trái Đất ở dạng hợp chất hóa học, ngoại trừ một lượng nhỏ được tìm thấy trong các hợp kim sắt thiên thạch tự nhiên. Nguyên tố tự do, được sản xuất bằng phương pháp nấu luyện khử, là một kim loại cứng, bóng, màu xám bạc.",
+                28: "Niken là một nguyên tố hóa học với ký hiệu Ni và số hiệu nguyên tử là 28. Nó là một kim loại màu trắng bạc có ánh vàng nhẹ, thuộc nhóm kim loại chuyển tiếp. Nó cứng và dễ uốn.",
+                29: "Đồng là một nguyên tố hóa học với ký hiệu Cu và số hiệu nguyên tử là 29. Nó là một kim loại mềm, dễ uốn và dễ dát với khả năng dẫn nhiệt và dẫn điện rất cao. Bề mặt đồng nguyên chất mới lộ ra có màu hồng cam.",
+                30: "Kẽm là một nguyên tố hóa học với ký hiệu Zn và số hiệu nguyên tử là 30. Nó là nguyên tố đầu tiên trong nhóm 12 của bảng tuần hoàn. Ở một số khía cạnh, kẽm có tính chất hóa học tương tự như magnesi: cả hai nguyên tố đều chỉ có một trạng thái oxy hóa thông thường (+2), và các ion Zn2+ và Mg2+ có kích thước tương tự nhau.",
+                31: "Gali là một nguyên tố hóa học với ký hiệu Ga và số hiệu nguyên tử là 31. Gali nguyên tố là một kim loại mềm, màu bạc ở nhiệt độ và áp suất tiêu chuẩn. Ở trạng thái lỏng, nó trở thành màu trắng bạc. Nếu tác dụng quá nhiều lực, gali có thể bị vỡ theo kiểu vỏ sò.",
+                32: "Germani là một nguyên tố hóa học với ký hiệu Ge và số hiệu nguyên tử là 32. Nó là một á kim cứng, giòn, bóng, màu trắng xám trong nhóm carbon, có tính chất hóa học tương tự như các thành viên cùng nhóm là silic và thiếc. Giống như silic, germani phản ứng và tạo phức với oxy trong tự nhiên.",
+                33: "Asen là một nguyên tố hóa học với ký hiệu As và số hiệu nguyên tử là 33. Asen xuất hiện ở nhiều khoáng vật, thường kết hợp với lưu huỳnh và các kim loại, nhưng cũng có ở dạng tinh thể nguyên tố tinh khiết. Asen là một á kim.",
+                34: "Selen là một nguyên tố hóa học với ký hiệu Se và số hiệu nguyên tử là 34. Nó là một phi kim có các tính chất trung gian giữa các nguyên tố lân cận trong bảng tuần hoàn là lưu huỳnh và tellur, và cũng có những điểm tương đồng với asen. Nó hiếm khi xuất hiện ở trạng thái nguyên tố hoặc ở dạng hợp chất quặng tinh khiết trong lớp vỏ Trái Đất.",
+                35: "Brom là một nguyên tố hóa học với ký hiệu Br và số hiệu nguyên tử là 35. Nó là một halogen ('tạo muối'). Nguyên tố này được phân lập độc lập bởi hai nhà hóa học, Carl Jacob Löwig và Antoine Jérôme Balard, vào năm 1825 và 1826.",
+                36: "Krypton là một nguyên tố hóa học với ký hiệu Kr và số hiệu nguyên tử là 36. Nó là một thành viên của nhóm 18 (khí hiếm) và chu kỳ 4. Krypton là một khí trơ không màu, không mùi, không vị, xuất hiện với một lượng nhỏ trong khí quyển và thường được sử dụng cùng với các khí hiếm khác trong đèn huỳnh quang.",
+                37: "Rubidi là một nguyên tố hóa học với ký hiệu Rb và số hiệu nguyên tử là 37. Rubidi là một kim loại kiềm rất mềm, màu trắng bạc. Nguyên tố rubidi có độ phản ứng cao, với các tính chất tương tự như các kim loại kiềm khác, chẳng hạn như oxy hóa nhanh trong không khí.",
+                38: "Stronti là một nguyên tố hóa học với ký hiệu Sr và số hiệu nguyên tử là 38. Là một kim loại kiềm thổ, stronti là một nguyên tố kim loại mềm, màu trắng bạc, có độ phản ứng hóa học cao. Kim loại này tạo thành một lớp oxit sẫm màu khi tiếp xúc với không khí.",
+                39: "Yttri là một nguyên tố hóa học với ký hiệu Y và số hiệu nguyên tử là 39. Nó là một kim loại chuyển tiếp màu trắng bạc, có tính chất hóa học tương tự như các lanthanide và thường được phân loại là một 'nguyên tố đất hiếm'. Yttri hầu như luôn được tìm thấy kết hợp với các nguyên tố lanthanide trong các khoáng vật đất hiếm, và không bao giờ được tìm thấy trong tự nhiên dưới dạng một nguyên tố tự do.",
+                40: "Zirconi là một nguyên tố hóa học với ký hiệu Zr và số hiệu nguyên tử là 40. Tên zirconi được lấy từ tên của khoáng vật zircon, nguồn zirconi quan trọng nhất. Nó là một kim loại chuyển tiếp bóng, màu trắng xám, cứng, giống như hafni và ở một mức độ thấp hơn là titan.",
+                41: "Niobi, trước đây là columbi, là một nguyên tố hóa học với ký hiệu Nb và số hiệu nguyên tử là 41. Nó là một kim loại chuyển tiếp mềm, màu xám, kết tinh, dễ uốn, thường được tìm thấy trong khoáng vật pyrochlore, nguồn thương mại chính cho niobi, và columbite. Tên gọi này bắt nguồn từ thần thoại Hy Lạp: Niobe, con gái của Tantalus.",
+                42: "Molybden là một nguyên tố hóa học với ký hiệu Mo và số hiệu nguyên tử là 42. Tên gọi này bắt nguồn từ tiếng Neo-Latin Molybdaenum, dựa trên tiếng Hy Lạp cổ đại Μόλυβδος molybdos, có nghĩa là chì, vì các quặng của nó bị nhầm lẫn với các quặng chì. Các khoáng vật molybden đã được biết đến từ xưa, nhưng nguyên tố này được 'phát hiện' (theo nghĩa là phân biệt nó như một thực thể mới từ các muối khoáng của các kim loại khác) vào năm 1778 bởi Carl Wilhelm Scheele.",
+                43: "Techneti là một nguyên tố hóa học với ký hiệu Tc và số hiệu nguyên tử là 43. Nó là nguyên tố nhẹ nhất mà tất cả các đồng vị của nó đều có tính phóng xạ; không có đồng vị nào là bền. Gần như tất cả techneti được sản xuất nhân tạo, và chỉ một lượng cực nhỏ được tìm thấy trong lớp vỏ Trái Đất.",
+                44: "Rutheni là một nguyên tố hóa học với ký hiệu Ru và số hiệu nguyên tử là 44. Nó là một kim loại chuyển tiếp hiếm thuộc nhóm platin trong bảng tuần hoàn. Giống như các kim loại khác trong nhóm platin, rutheni trơ với hầu hết các hóa chất khác.",
+                45: "Rhodi là một nguyên tố hóa học với ký hiệu Rh và số hiệu nguyên tử là 45. Nó là một kim loại chuyển tiếp hiếm, màu trắng bạc, cứng, chống ăn mòn và trơ về mặt hóa học. Nó là một kim loại quý và là thành viên của nhóm platin.",
+                46: "Palladi là một nguyên tố hóa học với ký hiệu Pd và số hiệu nguyên tử là 46. Nó là một kim loại hiếm và bóng, màu trắng bạc, được William Hyde Wollaston phát hiện vào năm 1803. Ông đặt tên nó theo tiểu hành tinh Pallas, bản thân nó cũng được đặt theo tên của nữ thần Athena, được gọi là Pallas trong thần thoại Hy Lạp.",
+                47: "Bạc là một nguyên tố hóa học với ký hiệu Ag và số hiệu nguyên tử là 47. Là một kim loại chuyển tiếp mềm, trắng, bóng, nó có độ dẫn điện, dẫn nhiệt và độ phản xạ cao nhất trong tất cả các kim loại. Kim loại này được tìm thấy trong lớp vỏ Trái Đất ở dạng nguyên tố tự do, tinh khiết ('bạc tự nhiên'), dưới dạng hợp kim với vàng và các kim loại khác, và trong các khoáng vật như argentite và chlorargyrite.",
+                48: "Cadmi là một nguyên tố hóa học với ký hiệu Cd và số hiệu nguyên tử là 48. Kim loại mềm, màu trắng xanh này có tính chất hóa học tương tự như hai kim loại bền khác trong nhóm 12 là kẽm và thủy ngân. Giống như kẽm, nó thể hiện trạng thái oxy hóa +2 trong hầu hết các hợp chất của nó và giống như thủy ngân, nó có điểm nóng chảy thấp hơn so với các kim loại chuyển tiếp.",
+                49: "Indi là một nguyên tố hóa học với ký hiệu In và số hiệu nguyên tử là 49. Nó là một kim loại sau chuyển tiếp hiếm nhất. Nó mềm, dễ uốn và dễ nóng chảy, với các tính chất hóa học trung gian giữa các thành viên cùng nhóm là gali và thali.",
+                50: "Thiếc là một nguyên tố hóa học với ký hiệu Sn và số hiệu nguyên tử là 50. Nó là một kim loại sau chuyển tiếp trong nhóm 14 của bảng tuần hoàn. Thiếc có tính chất hóa học tương tự như cả hai nguyên tố lân cận trong nhóm 14, germani và chì, và có hai trạng thái oxy hóa chính, +2 và +4 hơi ổn định hơn một chút.",
+                51: "Antimon là một nguyên tố hóa học với ký hiệu Sb và số hiệu nguyên tử là 51. Là một á kim bóng, màu xám, nó được tìm thấy trong tự nhiên chủ yếu dưới dạng khoáng vật sulfide stibnite (Sb2S3). Các hợp chất antimon đã được biết đến từ thời cổ đại và được nghiền thành bột để sử dụng làm thuốc và mỹ phẩm, thường được gọi bằng tên tiếng Ả Rập là kohl.",
+                52: "Tellur là một nguyên tố hóa học với ký hiệu Te và số hiệu nguyên tử là 52. Nó là một á kim giòn, hơi độc, hiếm, màu trắng bạc. Tellur có tính chất hóa học liên quan đến selen và lưu huỳnh.",
+                53: "Iốt là một nguyên tố hóa học với ký hiệu I và số hiệu nguyên tử là 53. Tên gọi này bắt nguồn từ tiếng Hy Lạp ἰοειδής ioeidēs, có nghĩa là màu tím hoặc tím, do màu của hơi iốt nguyên tố. Iốt và các hợp chất của nó chủ yếu được sử dụng trong dinh dưỡng, và ở quy mô công nghiệp trong sản xuất axit axetic và một số polyme.",
+                54: "Xenon là một nguyên tố hóa học với ký hiệu Xe và số hiệu nguyên tử là 54. Nó là một khí hiếm không màu, đậm đặc, không mùi, được tìm thấy trong khí quyển Trái Đất với một lượng nhỏ. Mặc dù nhìn chung không phản ứng, xenon có thể trải qua một số phản ứng hóa học như sự hình thành xenon hexafluoroplatinate, hợp chất khí hiếm đầu tiên được tổng hợp.",
+                55: "Caesi là một nguyên tố hóa học với ký hiệu Cs và số hiệu nguyên tử là 55. Nó là một kim loại kiềm mềm, màu vàng bạc, nóng chảy ở nhiệt độ gần bằng nhiệt độ phòng. Caesi có các tính chất vật lý và hóa học tương tự như rubidi và kali.",
+                56: "Bari là một nguyên tố hóa học với ký hiệu Ba và số hiệu nguyên tử là 56. Nó là nguyên tố thứ năm trong Nhóm 2, một kim loại kiềm thổ mềm, màu bạc. Do có độ phản ứng hóa học cao, bari không bao giờ được tìm thấy trong tự nhiên dưới dạng một nguyên tố tự do.",
+                57: "Lanthan là một nguyên tố hóa học với ký hiệu La và số hiệu nguyên tử là 57. Nó là một kim loại mềm, dễ uốn, màu trắng bạc, bị xỉn màu nhanh chóng khi tiếp xúc với không khí và đủ mềm để có thể cắt bằng dao. Nó là nguyên tố cùng tên của chuỗi lanthanide, một nhóm gồm 15 nguyên tố tương tự giữa lanthan và luteti trong bảng tuần hoàn, trong đó lanthan là nguyên mẫu.",
+                58: "Xeri là một nguyên tố hóa học với ký hiệu Ce và số hiệu nguyên tử là 58. Nó là một kim loại mềm, dễ uốn, màu trắng bạc, bị xỉn màu khi tiếp xúc với không khí, và đủ mềm để có thể cắt bằng dao. Xeri là nguyên tố phổ biến thứ hai trong chuỗi lanthanide, chiếm khoảng 66 phần triệu trong lớp vỏ Trái Đất, chỉ sau europi.",
+                59: "Praseodymi là một nguyên tố hóa học với ký hiệu Pr và số hiệu nguyên tử là 59. Nó là nguyên tố thứ ba trong chuỗi lanthanide và theo truyền thống được coi là một trong những nguyên tố đất hiếm. Praseodymi là một kim loại mềm, màu trắng bạc, dễ uốn và dễ dát, được đánh giá cao về các tính chất từ, điện, hóa học và quang học.",
+                60: "Neodymi là một nguyên tố hóa học với ký hiệu Nd và số hiệu nguyên tử là 60. Nó là một kim loại đất hiếm và tạo thành một phần của chuỗi Lanthanide. Nó là một kim loại cứng, hơi dễ uốn, màu trắng bạc, bị xỉn màu nhanh chóng trong không khí và độ ẩm.",
+                61: "Promethi là một nguyên tố hóa học với ký hiệu Pm và số hiệu nguyên tử là 61. Tất cả các đồng vị của nó đều có tính phóng xạ; nó cực kỳ hiếm, chỉ có khoảng 500-600 gram xuất hiện tự nhiên trong lớp vỏ Trái Đất tại bất kỳ thời điểm nào. Promethi là một trong hai nguyên tố phóng xạ được theo sau trong bảng tuần hoàn bởi các nguyên tố bền, nguyên tố còn lại là techneti.",
+                62: "Samari là một nguyên tố hóa học với ký hiệu Sm và số hiệu nguyên tử là 62. Nó là một kim loại cứng vừa phải, màu trắng bạc, bị oxy hóa từ từ trong không khí. Là một thành viên tiêu biểu của chuỗi lanthanide, samari thường có trạng thái oxy hóa +3. Các hợp chất của samari(II) cũng được biết đến, trong đó đáng chú ý nhất là oxit SmO, monochalcogenide SmS, SmSe và SmTe, cũng như samari(II) iodide.",
+                63: "Europi là một nguyên tố hóa học với ký hiệu Eu và số hiệu nguyên tử là 63. Nó là một kim loại cứng vừa phải, màu trắng bạc, bị oxy hóa dễ dàng trong không khí và nước. Thuộc nhóm lanthanide, europi thường có trạng thái oxy hóa +3, nhưng trạng thái oxy hóa +2 cũng phổ biến.",
+                64: "Gadolini là một nguyên tố hóa học với ký hiệu Gd và số hiệu nguyên tử là 64. Gadolini là một kim loại màu trắng bạc khi lớp oxit của nó được loại bỏ. Nó chỉ hơi dễ uốn và là một nguyên tố đất hiếm dễ uốn. Gadolini phản ứng với oxy trong khí quyển hoặc độ ẩm từ từ để tạo thành một lớp phủ màu đen.",
+                65: "Terbi là một nguyên tố hóa học với ký hiệu Tb và số hiệu nguyên tử là 65. Nó là một kim loại đất hiếm màu trắng bạc, dễ uốn, dễ dát và đủ mềm để có thể cắt bằng dao. Terbi là nguyên tố thứ chín trong chuỗi lanthanide.",
+                66: "Dysprosi là một nguyên tố hóa học với ký hiệu Dy và số hiệu nguyên tử là 66. Nó là một nguyên tố đất hiếm có ánh kim loại màu bạc. Dysprosi không bao giờ được tìm thấy trong tự nhiên dưới dạng một nguyên tố tự do, mặc dù nó được tìm thấy trong các khoáng vật khác nhau, chẳng hạn như xenotime.",
+                67: "Holmi là một nguyên tố hóa học với ký hiệu Ho và số hiệu nguyên tử là 67. Là một phần của chuỗi lanthanide, holmi là một nguyên tố đất hiếm. Holmi là một kim loại tương đối mềm và dễ uốn, có màu trắng bạc, chống ăn mòn khá tốt và bền trong không khí khô ở điều kiện tiêu chuẩn.",
+                68: "Erbi là một nguyên tố hóa học với ký hiệu Er và số hiệu nguyên tử là 68. Là một kim loại đất hiếm rắn, màu trắng bạc khi được phân lập nhân tạo, erbi tự nhiên luôn được tìm thấy ở dạng hợp chất hóa học với các nguyên tố khác trên Trái Đất. Là một lanthanide, erbi được liên kết với một số nguyên tố đất hiếm khác trong khoáng vật gadolinite từ Ytterby ở Thụy Điển, nơi yttri, ytterbi và terbi được phát hiện.",
+                69: "Thuli là một nguyên tố hóa học với ký hiệu Tm và số hiệu nguyên tử là 69. Nó là nguyên tố thứ mười ba và áp chót trong chuỗi lanthanide. Giống như các lanthanide khác, trạng thái oxy hóa phổ biến nhất là +3, được thấy trong các oxit, halogenua và các hợp chất khác của nó.",
+                70: "Ytterbi là một nguyên tố hóa học với ký hiệu Yb và số hiệu nguyên tử là 70. Nó là nguyên tố thứ mười bốn và áp chót trong chuỗi lanthanide, là cơ sở cho sự ổn định tương đối của trạng thái oxy hóa +2 của nó. Tuy nhiên, giống như các lanthanide khác, trạng thái oxy hóa phổ biến nhất của nó là +3, như trong oxit, halogenua và các hợp chất khác.",
+                71: "Luteti là một nguyên tố hóa học với ký hiệu Lu và số hiệu nguyên tử là 71. Nó là một kim loại màu trắng bạc, chống ăn mòn trong không khí khô, nhưng không trong không khí ẩm. Luteti là nguyên tố cuối cùng trong chuỗi lanthanide và theo truyền thống được tính vào nhóm các nguyên tố đất hiếm.",
+                72: "Hafni là một nguyên tố hóa học với ký hiệu Hf và số hiệu nguyên tử là 72. Là một kim loại chuyển tiếp tứ hóa trị, bóng, màu trắng bạc, hafni có tính chất hóa học tương tự như zirconi và được tìm thấy trong các khoáng vật zirconi. Sự tồn tại của nó đã được dự đoán bởi Dmitri Mendeleev vào năm 1869, mặc dù phải đến năm 1923 nó mới được Dirk Coster và Georg von Hevesy xác định, làm cho nó trở thành nguyên tố bền cuối cùng được phát hiện.",
+                73: "Tantali là một nguyên tố hóa học với ký hiệu Ta và số hiệu nguyên tử là 73. Trước đây được gọi là tantal, tên gọi của nó bắt nguồn từ Tantalus, một nhân vật phản diện trong thần thoại Hy Lạp. Tantali là một kim loại chuyển tiếp hiếm, cứng, màu xám xanh, bóng, có khả năng chống ăn mòn cao.",
+                74: "Vonfram, còn được gọi là wolfram, là một nguyên tố hóa học với ký hiệu W và số hiệu nguyên tử là 74. Tên vonfram bắt nguồn từ khoáng vật wolframite, nơi nó được phát hiện lần đầu tiên. Vonfram là một kim loại hiếm được tìm thấy tự nhiên trên Trái Đất gần như chỉ ở dạng hợp chất trong các khoáng vật.",
+                75: "Rheni là một nguyên tố hóa học với ký hiệu Re và số hiệu nguyên tử là 75. Nó là một kim loại chuyển tiếp màu trắng bạc, nặng, thuộc nhóm 7 của bảng tuần hoàn. Với nồng độ trung bình ước tính là 1 phần tỷ, rheni là một trong những nguyên tố hiếm nhất trong lớp vỏ Trái Đất.",
+                76: "Osmi là một nguyên tố hóa học với ký hiệu Os và số hiệu nguyên tử là 76. Nó là một kim loại chuyển tiếp cứng, giòn, màu trắng xanh trong nhóm platin, được tìm thấy dưới dạng một nguyên tố vi lượng trong các hợp kim, chủ yếu là trong các quặng platin. Osmi là nguyên tố tự nhiên đậm đặc nhất, với khối lượng riêng được đo bằng thực nghiệm (sử dụng phương pháp tinh thể học tia X) là 22.59 g/cm3.",
+                77: "Iridi là một nguyên tố hóa học với ký hiệu Ir và số hiệu nguyên tử là 77. Là một kim loại chuyển tiếp rất cứng, giòn, màu trắng bạc trong nhóm platin, iridi thường được coi là kim loại chống ăn mòn tốt thứ hai, sau osmi. Do độ cứng, độ giòn và điểm nóng chảy rất cao, iridi rắn rất khó gia công, tạo hình hoặc chế tạo, và do đó, luyện kim bột thường được sử dụng thay thế.",
+                78: "Platin là một nguyên tố hóa học với ký hiệu Pt và số hiệu nguyên tử là 78. Nó là một kim loại chuyển tiếp đậm đặc, dễ uốn, dễ dát, có độ phản ứng thấp, quý, màu trắng bạc. Tên của nó có nguồn gốc từ thuật ngữ tiếng Tây Ban Nha platina, được dịch theo nghĩa đen là 'bạc nhỏ'.",
+                79: "Vàng là một nguyên tố hóa học với ký hiệu Au và số hiệu nguyên tử là 79. Ở dạng tinh khiết nhất, nó là một kim loại sáng, hơi đỏ vàng, đậm đặc, mềm, dễ uốn và dễ dát. Về mặt hóa học, vàng là một kim loại chuyển tiếp và là một nguyên tố nhóm 11.",
+                80: "Thủy ngân là một nguyên tố hóa học với ký hiệu Hg và số hiệu nguyên tử là 80. Nó thường được gọi là quicksilver và trước đây được đặt tên là hydrargyrum. Là một nguyên tố nặng, màu trắng bạc, thủy ngân là nguyên tố kim loại duy nhất lỏng ở điều kiện nhiệt độ và áp suất tiêu chuẩn; brom là nguyên tố duy nhất khác làm được điều này.",
+                81: "Thali là một nguyên tố hóa học với ký hiệu Tl và số hiệu nguyên tử là 81. Nó là một kim loại sau chuyển tiếp màu xám, bị xỉn màu thành một màu xanh lam khi tiếp xúc với không khí. Nhà hóa học người Anh William Crookes đã phát hiện ra thali một cách quang phổ vào năm 1861, dựa trên vạch phát xạ màu xanh lá cây nổi bật của nó, đặt tên cho nguyên tố này theo từ thallus của tiếng Hy Lạp, có nghĩa là một chồi hoặc cành cây màu xanh lá cây.",
+                82: "Chì là một nguyên tố hóa học với ký hiệu Pb và số hiệu nguyên tử là 82. Nó là một kim loại nặng, đậm đặc hơn hầu hết các vật liệu thông thường. Chì mềm và dễ uốn, và cũng có điểm nóng chảy tương đối thấp. Khi mới cắt, chì có màu trắng xanh và bị xỉn màu thành màu xám xỉn khi tiếp xúc với không khí.",
+                83: "Bismut là một nguyên tố hóa học với ký hiệu Bi và số hiệu nguyên tử là 83. Nó là một kim loại sau chuyển tiếp ngũ hóa trị và là một trong những pnictogen có tính chất hóa học tương tự như asen và antimon. Bismut nguyên tố có thể xuất hiện trong tự nhiên, mặc dù quặng sulfide và oxit của nó là các quặng thương mại quan trọng.",
+                84: "Poloni là một nguyên tố hóa học với ký hiệu Po và số hiệu nguyên tử là 84, do Marie Curie và Pierre Curie phát hiện vào năm 1898. Là một á kim phóng xạ hiếm và có độ phóng xạ cao, poloni có tính chất hóa học tương tự như tellur và bismut, và nó xuất hiện trong các quặng uranium.",
+                85: "Atatin là một nguyên tố hóa học phóng xạ với ký hiệu At và số hiệu nguyên tử là 85. Nó là nguyên tố nặng nhất được biết đến trong nhóm halogen. Nó xuất hiện trên Trái Đất như là sản phẩm phân rã của các nguyên tố nặng hơn khác.",
+                86: "Radon là một nguyên tố hóa học phóng xạ, không màu, không mùi, không vị, là một khí hiếm, xuất hiện tự nhiên dưới dạng sản phẩm phân rã gián tiếp của uranium hoặc thori. Đồng vị bền nhất của nó, 222Rn, có chu kỳ bán rã là 3,8 ngày. Radon là một trong những chất đậm đặc nhất vẫn là khí trong điều kiện bình thường.",
+                87: "Franci là một nguyên tố hóa học với ký hiệu Fr và số hiệu nguyên tử là 87. Trước khi được phát hiện, nó được gọi là eka-caesi. Nó cực kỳ phóng xạ; đồng vị bền nhất của nó, franci-223 (ban đầu được gọi là actini K theo chuỗi phân rã tự nhiên mà nó xuất hiện), có chu kỳ bán rã chỉ 22 phút.",
+                88: "Radi là một nguyên tố hóa học với ký hiệu Ra và số hiệu nguyên tử là 88. Nó là nguyên tố thứ sáu trong nhóm 2 của bảng tuần hoàn, còn được gọi là kim loại kiềm thổ. Radi tinh khiết có màu trắng bạc, nhưng nó dễ dàng phản ứng với nitơ (chứ không phải oxy) khi tiếp xúc với không khí, tạo thành một lớp bề mặt màu đen của radi nitride (Ra3N2).",
+                89: "Actini là một nguyên tố hóa học phóng xạ với ký hiệu Ac và số hiệu nguyên tử là 89, được phát hiện bởi André-Louis Debierne vào năm 1899. Friedrich Oskar Giesel sau đó đã phát hiện ra nó một cách độc lập vào năm 1902. Actini đã đặt tên cho chuỗi actini, một nhóm gồm 15 nguyên tố tương tự giữa actini và lawrenci trong bảng tuần hoàn.",
+                90: "Thori là một nguyên tố hóa học phóng xạ yếu với ký hiệu Th và số hiệu nguyên tử là 90. Thori có màu trắng bạc và bị xỉn màu thành đen khi tiếp xúc với không khí, tạo thành thori dioxide; nó cứng vừa phải, dễ uốn và có điểm nóng chảy cao. Thori là một actini điện dương có trạng thái oxy hóa chiếm ưu thế là +4, phản ứng khá mạnh và có thể bắt lửa trong không khí khi được chia nhỏ.",
+                91: "Protactini là một nguyên tố hóa học với ký hiệu Pa và số hiệu nguyên tử là 91. Nó là một kim loại actini nặng, màu trắng bạc, đậm đặc, bị xỉn màu dễ dàng khi tiếp xúc với không khí. Nó tạo thành các hợp chất với trạng thái oxy hóa +2, +3, +4 và +5, trong đó +5 là bền nhất. Nó có nồng độ trung bình là vài phần nghìn tỷ trong lớp vỏ Trái Đất.",
+                92: "Urani là một nguyên tố hóa học với ký hiệu U và số hiệu nguyên tử là 92. Nó là một kim loại actini màu trắng bạc trong chuỗi actini của bảng tuần hoàn. Một nguyên tử urani có 92 proton và 92 electron, trong đó 6 là electron hóa trị.",
+                93: "Neptuni là một nguyên tố hóa học phóng xạ với ký hiệu Np và số hiệu nguyên tử là 93. Là một kim loại actini, neptuni là nguyên tố transuranic đầu tiên. Vị trí của nó trong bảng tuần hoàn ngay sau urani, được đặt tên theo hành tinh Uranus, đã khiến nó được đặt tên theo Neptune, hành tinh tiếp theo ngoài Uranus.",
+                94: "Plutoni là một nguyên tố hóa học actini phóng xạ với ký hiệu Pu và số hiệu nguyên tử là 94. Nó là một kim loại có vẻ ngoài màu trắng bạc, bị xỉn màu khi tiếp xúc với không khí, và tạo thành một lớp phủ xỉn màu khi bị oxy hóa. Nguyên tố này thường thể hiện sáu dạng thù hình và bốn trạng thái oxy hóa. Nó phản ứng với carbon, halogen, nitơ, silic và hydro.",
+                95: "Americi là một nguyên tố hóa học phóng xạ với ký hiệu Am và số hiệu nguyên tử là 95. Nguyên tố này được đặt tên theo châu Mỹ, tương tự như europi được đặt tên theo châu Âu. Americi là một kim loại actini, nằm trong bảng tuần hoàn bên dưới nguyên tố lanthanide europi, và có những điểm tương đồng về vật lý và hóa học.",
+                96: "Curi là một nguyên tố hóa học transuranic phóng xạ với ký hiệu Cm và số hiệu nguyên tử là 96. Nguyên tố này được đặt tên theo Marie và Pierre Curie. Curi là một kim loại actini cứng, đậm đặc, màu bạc, có điểm nóng chảy và điểm sôi tương đối cao đối với chuỗi actini.",
+                97: "Berkeli là một nguyên tố hóa học actini phóng xạ với ký hiệu Bk và số hiệu nguyên tử là 97. Nó được đặt tên theo thành phố Berkeley, California, địa điểm của Phòng thí nghiệm Bức xạ Quốc gia Lawrence Berkeley (sau đó là Phòng thí nghiệm Bức xạ Đại học California) nơi nó được phát hiện vào tháng 12 năm 1949. Berkeli là nguyên tố transuranic thứ năm được tổng hợp.",
+                98: "Californi là một nguyên tố hóa học phóng xạ với ký hiệu Cf và số hiệu nguyên tử là 98. Nguyên tố này được tạo ra lần đầu tiên vào năm 1950 tại Phòng thí nghiệm Bức xạ Đại học California ở Berkeley, bằng cách bắn phá curi bằng các hạt alpha (ion heli-4). Nó là một nguyên tố actini, nguyên tố transuranic thứ sáu được tổng hợp, và có khối lượng nguyên tử cao thứ hai trong tất cả các nguyên tố đã được sản xuất với số lượng đủ lớn để có thể nhìn thấy bằng mắt thường (sau einsteini).",
+                99: "Einsteini là một nguyên tố hóa học tổng hợp với ký hiệu Es và số hiệu nguyên tử là 99. Là một thành viên của chuỗi actini, nó là nguyên tố transuranic thứ bảy. Einsteini được phát hiện là một thành phần của các mảnh vỡ của vụ nổ bom hydro đầu tiên vào năm 1952, và được đặt tên theo Albert Einstein.",
+                100: "Fermi là một nguyên tố hóa học tổng hợp với ký hiệu Fm và số hiệu nguyên tử là 100. Nó là một actini và là nguyên tố nặng nhất có thể được tạo ra bằng cách bắn phá neutron vào các nguyên tố nhẹ hơn, và do đó là nguyên tố cuối cùng có thể được điều chế với số lượng vĩ mô. Tổng cộng có 19 đồng vị được biết đến, trong đó 257Fm là đồng vị sống lâu nhất với chu kỳ bán rã là 100,5 ngày.",
+                101: "Mendelevi là một nguyên tố hóa học tổng hợp với ký hiệu Md và số hiệu nguyên tử là 101. Là một nguyên tố actini kim loại, phóng xạ, mendelevi thường được tổng hợp bằng cách bắn phá các nguyên tử einsteini bằng các hạt alpha. Nó được đặt tên theo Dmitri Mendeleev, cha đẻ của bảng tuần hoàn.",
+                102: "Nobeli là một nguyên tố hóa học tổng hợp với ký hiệu No và số hiệu nguyên tử là 102. Nó được đặt tên để vinh danh Alfred Nobel, nhà phát minh ra thuốc nổ và là người sáng lập ra Giải thưởng Nobel. Là một kim loại phóng xạ, nó là nguyên tố transuranic thứ mười và là actini cuối cùng trong bảng tuần hoàn.",
+                103: "Lawrenci là một nguyên tố hóa học tổng hợp với ký hiệu Lr và số hiệu nguyên tử là 103. Nó được đặt tên để vinh danh Ernest Lawrence, nhà phát minh ra máy gia tốc cyclotron, một thiết bị được sử dụng để khám phá nhiều nguyên tố phóng xạ nhân tạo. Là một kim loại phóng xạ, lawrenci là nguyên tố transuranic thứ mười một và cũng là thành viên cuối cùng của chuỗi actini.",
+                104: "Rutherfordi là một nguyên tố hóa học phóng xạ tổng hợp với ký hiệu Rf và số hiệu nguyên tử là 104, được đặt tên để vinh danh nhà vật lý Ernest Rutherford. Là nguyên tố transactinide đầu tiên, nó có các đồng vị được biết đến ngắn ngủi nhất có chu kỳ bán rã dưới 1,3 giờ. Các thí nghiệm hóa học đã xác nhận rằng rutherfordi hoạt động như một chất tương đồng nặng hơn với hafni.",
+                105: "Dubni là một nguyên tố hóa học tổng hợp với ký hiệu Db và số hiệu nguyên tử là 105. Dubni có độ phóng xạ cao: đồng vị bền nhất được biết đến, dubni-268, có chu kỳ bán rã hơn một ngày. Điều này rất cản trở việc nghiên cứu nguyên tố này.",
+                106: "Seaborgi là một nguyên tố hóa học tổng hợp với ký hiệu Sg và số hiệu nguyên tử là 106. Seaborgi cũng được dự đoán là có các tính chất tương tự như các chất tương đồng nhẹ hơn của nó (wolfram và molybden). Chỉ có một vài nguyên tử seaborgi từng được tạo ra, và chúng chỉ được sử dụng trong nghiên cứu khoa học.",
+                107: "Bohri là một nguyên tố hóa học tổng hợp với ký hiệu Bh và số hiệu nguyên tử là 107. Nó được đặt tên theo nhà vật lý người Đan Mạch Niels Bohr. Là một nguyên tố tổng hợp, nó có thể được tạo ra trong phòng thí nghiệm nhưng không được tìm thấy trong tự nhiên.",
+                108: "Hassi là một nguyên tố hóa học tổng hợp với ký hiệu Hs và số hiệu nguyên tử là 108, được đặt tên theo bang Hesse của Đức. Nó là một nguyên tố phóng xạ; đồng vị bền nhất được biết đến, 277Hs, có chu kỳ bán rã khoảng 30 giây. Hơn 100 nguyên tử hassi đã được tổng hợp cho đến nay.",
+                109: "Meitneri là một nguyên tố hóa học tổng hợp với ký hiệu Mt và số hiệu nguyên tử là 109. Nó được đặt tên theo Lise Meitner. Nó là một nguyên tố cực kỳ phóng xạ; đồng vị bền nhất được biết đến, meitneri-278, có chu kỳ bán rã là 7,6 giây.",
+                110: "Darmstadti là một nguyên tố hóa học tổng hợp với ký hiệu Ds và số hiệu nguyên tử là 110. Nó là một nguyên tố cực kỳ phóng xạ. Đồng vị bền nhất được biết đến, darmstadti-281, có chu kỳ bán rã khoảng 10 giây. Darmstadti được tạo ra lần đầu tiên vào năm 1994 bởi Trung tâm Nghiên cứu Ion nặng GSI Helmholtz ở gần Darmstadt, Đức.",
+                111: "Roentgeni là một nguyên tố hóa học tổng hợp với ký hiệu Rg và số hiệu nguyên tử là 111. Nó được đặt tên theo nhà vật lý Wilhelm Röntgen, người đã phát hiện ra tia X. Cho đến nay, chỉ có một vài nguyên tử roentgeni từng được tổng hợp.",
+                112: "Copernici là một nguyên tố hóa học tổng hợp với ký hiệu Cn và số hiệu nguyên tử là 112. Các đồng vị phóng xạ của nó, Cn-277 đến Cn-285, cực kỳ không bền và phân rã theo phân rã alpha với chu kỳ bán rã từ micro giây đến phút. Copernici là nguyên tố nặng nhất với các tính chất hóa học đã được xác nhận thực nghiệm.",
+                113: "Nihoni là một nguyên tố hóa học tổng hợp với ký hiệu Nh và số hiệu nguyên tử là 113. Nó là một nguyên tố cực kỳ phóng xạ; đồng vị bền nhất được biết đến, nihoni-286, có chu kỳ bán rã khoảng 20 giây. Trong bảng tuần hoàn, nihoni là một nguyên tố khối p và là một nguyên tố transactinide.",
+                114: "Flerovi là một nguyên tố hóa học tổng hợp siêu nặng với ký hiệu Fl và số hiệu nguyên tử là 114. Nó là một nguyên tố cực kỳ phóng xạ, được đặt tên theo Phòng thí nghiệm Phản ứng Hạt nhân Flerov của Viện Nghiên cứu Hạt nhân Hỗn hợp ở Dubna, Nga, nơi nguyên tố này được phát hiện vào năm 1998. Tên của phòng thí nghiệm, lần lượt, vinh danh nhà vật lý người Nga Georgy Flyorov.",
+                115: "Moscovi là một nguyên tố hóa học tổng hợp với ký hiệu Mc và số hiệu nguyên tử là 115. Nó được báo cáo lần đầu tiên được tạo ra vào năm 2003 bởi một nhóm các nhà khoa học Nga và Mỹ tại Viện Nghiên cứu Hạt nhân Hỗn hợp (JINR) ở Dubna, Nga. Vào tháng 12 năm 2015, nó đã được công nhận là một trong bốn nguyên tố mới bởi Nhóm làm việc chung của các cơ quan khoa học quốc tế IUPAC và IUPAP.",
+                116: "Livermori là một nguyên tố hóa học tổng hợp với ký hiệu Lv và số hiệu nguyên tử là 116. Nó là một nguyên tố cực kỳ phóng xạ chỉ được tạo ra trong phòng thí nghiệm và không được quan sát thấy trong tự nhiên. Nguyên tố này được đặt tên theo Phòng thí nghiệm Quốc gia Lawrence Livermore ở Hoa Kỳ.",
+                117: "Tennessine là một nguyên tố hóa học tổng hợp với ký hiệu Ts và số hiệu nguyên tử là 117. Nó cũng là nguyên tố nặng thứ hai từng được tạo ra. Sự phát hiện ra tennessine đã được công bố vào năm 2010 bởi một sự hợp tác giữa Nga và Mỹ tại Viện Nghiên cứu Hạt nhân Hỗn hợp, Dubna, Nga.",
+                118: "Oganesson là một nguyên tố hóa học tổng hợp với ký hiệu Og và số hiệu nguyên tử là 118. Nó được báo cáo lần đầu tiên được tổng hợp vào năm 2002 tại Viện Nghiên cứu Hạt nhân Hỗn hợp (JINR) ở Dubna, Nga, bởi một nhóm các nhà khoa học Nga và Mỹ. Vào tháng 12 năm 2015, nó đã được công nhận là một trong bốn nguyên tố mới bởi Nhóm làm việc chung của IUPAC và IUPAP."
+            };
+
+
+            fetch(dataURL)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+                    return response.json();
+                })
+                .then(data => {
+                    createPeriodicTable(data.elements);
+                })
+                .catch(error => {
+                    console.error('Lỗi khi tải dữ liệu bảng tuần hoàn:', error);
+                    periodicTable.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: red;">Không thể tải dữ liệu bảng tuần hoàn.</p>`;
+                });
+            
+            function createPeriodicTable(elements) {
+                elements.sort((a, b) => a.number - b.number);
+                
+                elements.forEach(element => {
+                    const elementDiv = document.createElement('div');
+                    elementDiv.className = 'element';
+                    elementDiv.dataset.number = element.number;
+                    
+                    const categoryClass = element.category.replace(/\s+/g, '-').toLowerCase();
+                    elementDiv.classList.add(categoryClass);
+
+                    elementDiv.style.gridColumn = element.xpos;
+                    elementDiv.style.gridRow = element.ypos;
+                    
+                    elementDiv.innerHTML = `
+                        <div class="atomic-number">${element.number}</div>
+                        <div class="symbol">${element.symbol}</div>
+                        <div class="name">${element.name}</div>
+                    `;
+
+                    elementDiv.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        showElementDetails(element, elementDiv);
+                    });
+                    periodicTable.appendChild(elementDiv);
+                });
+            }
+
+            function showElementDetails(element, elementDiv) {
+                if (currentSelectedElement === elementDiv) {
+                    hideDetails();
+                    return;
+                }
+                currentSelectedElement = elementDiv;
+
+                const allElements = document.querySelectorAll('.element');
+                allElements.forEach(el => {
+                    el.classList.add('dimmed');
+                    el.classList.remove('selected');
+                });
+                elementDiv.classList.remove('dimmed');
+                elementDiv.classList.add('selected');
+                
+                // Lấy bản dịch từ dữ liệu đã lưu
+                const translatedText = translatedSummaries[element.number] || element.summary + " (Chưa có bản dịch)";
+                
+                popoverContent.innerHTML = `
+                    <div class="detail-header">
+                        <div class="detail-symbol">${element.symbol}</div>
+                        <div class="detail-name-atomic">
+                            <h2>${element.name}</h2>
+                            <span>Số hiệu nguyên tử: ${element.number}</span>
+                        </div>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><strong>Nguyên Tử Khối</strong><span>${element.atomic_mass ? element.atomic_mass.toFixed(4) : 'Chưa xác định'}</span></div>
+                        <div class="detail-item"><strong>Phân Loại</strong><span>${element.category}</span></div>
+                        <div class="detail-item detail-full"><strong>Cấu Hình Electron</strong><span>${element.electron_configuration_semantic || 'Không có'}</span></div>
+                        <div class="detail-item"><strong>Trạng Thái (ĐK chuẩn)</strong><span>${element.phase}</span></div>
+                        <div class="detail-item"><strong>Người Phát Hiện</strong><span>${element.discovered_by || 'Không rõ'}</span></div>
+                    </div>
+                    <div class="detail-summary"><strong>Tóm Tắt</strong><p>${translatedText}</p></div>
+                `;
+                
+                positionPopover(elementDiv);
+                popover.classList.add('visible');
+            }
+            
+            function positionPopover(targetElement) {
+                const rect = targetElement.getBoundingClientRect();
+                const popoverRect = popover.getBoundingClientRect();
+                const margin = 15;
+
+                let top, left;
+
+                // Prefer right
+                if (rect.right + popoverRect.width + margin < window.innerWidth) {
+                    left = rect.right + margin;
+                    top = rect.top + window.scrollY + (rect.height - popoverRect.height) / 2;
+                } 
+                // Else, prefer left
+                else if (rect.left - popoverRect.width - margin > 0) {
+                    left = rect.left - popoverRect.width - margin;
+                    top = rect.top + window.scrollY + (rect.height - popoverRect.height) / 2;
+                }
+                // Else, prefer bottom
+                else if (rect.bottom + popoverRect.height + margin < window.innerHeight) {
+                    top = rect.bottom + window.scrollY + margin;
+                    left = rect.left + (rect.width - popoverRect.width) / 2;
+                }
+                // Else, use top
+                else {
+                    top = rect.top + window.scrollY - popoverRect.height - margin;
+                    left = rect.left + (rect.width - popoverRect.width) / 2;
+                }
+
+                // Ensure it doesn't go off-screen vertically
+                top = Math.max(10, Math.min(top, window.innerHeight + window.scrollY - popoverRect.height - 10));
+
+                popover.style.left = `${left}px`;
+                popover.style.top = `${top}px`;
+            }
+
+            function hideDetails() {
+                popover.classList.remove('visible');
+                document.querySelectorAll('.element').forEach(el => {
+                    el.classList.remove('dimmed', 'selected');
+                });
+                currentSelectedElement = null;
+            }
+
+            document.addEventListener('click', hideDetails);
+            popover.addEventListener('click', (event) => event.stopPropagation());
+        });
+    </script>
+</body>
+</html>
+
